@@ -1,6 +1,16 @@
 export type SystemType = 'On-grid' | 'Off-grid' | 'Hybrid';
 
-export type LeadStatus = 'New' | 'Contacted' | 'Survey Scheduled' | 'Converted' | 'Lost';
+export type LeadStatus = 
+  | 'Lead / Inquiry' 
+  | 'Order Placed' 
+  | 'Site Survey' 
+  | 'Installation' 
+  | 'Commissioned' 
+  | 'New' 
+  | 'Contacted' 
+  | 'Survey Scheduled' 
+  | 'Converted' 
+  | 'Lost';
 
 export type QuotationStatus = 'Draft' | 'Sent' | 'Approved' | 'Rejected';
 
@@ -40,6 +50,7 @@ export interface Customer {
   leadStatus: LeadStatus;
   roofAreaSqFt?: number;
   sanctionLoadKw?: number;
+  monthlyBill?: number;
   notes?: string;
   createdAt: string;
 }
@@ -239,6 +250,8 @@ export interface SystemNotification {
 // ============================================================================
 
 export type CustomerOrderStatus = 
+  | 'Pending Approval'
+  | 'Technician Dispatched / Survey Scheduled'
   | 'Order Placed' 
   | 'Site Survey Scheduled' 
   | 'Hardware Allocated' 
@@ -268,6 +281,7 @@ export interface CustomerOrder {
   assignedTechnicianPhone?: string;
   selectedAddons?: string[];
   documentUrl?: string;
+  scheduledSurveyDate?: string;
   timestamp: string;
   notes?: string;
 }
@@ -315,8 +329,8 @@ export interface CustomerPersona {
 export const DEMO_CUSTOMERS: CustomerPersona[] = [
   {
     id: 'CUST-001',
-    name: 'Rajendra Joshi',
-    email: 'customer@gmail.com',
+    name: 'Aarav Mehta',
+    email: 'aarav.mehta@gmail.com',
     phone: '+91 98201 54321',
     address: 'Plot 42, Baner Hills, Pashan Highway',
     city: 'Pune',
@@ -325,34 +339,34 @@ export const DEMO_CUSTOMERS: CustomerPersona[] = [
     roofAreaSqFt: 1400,
     sanctionLoadKw: 10,
     installedSystem: '10 kW Hybrid Solar System',
-    avatarInitials: 'RJ'
+    avatarInitials: 'AM'
   },
   {
     id: 'CUST-002',
-    name: 'Ananya Deshpande',
-    email: 'ananya@gmail.com',
+    name: 'Pooja Sharma',
+    email: 'pooja.sharma@gmail.com',
     phone: '+91 98112 33456',
-    address: 'Villa 18, Greenwood Estates, Whitefield',
+    address: 'Villa 24, Palm Meadows, Whitefield',
     city: 'Bengaluru',
     state: 'Karnataka',
     pincode: '560066',
     roofAreaSqFt: 950,
     sanctionLoadKw: 6,
     installedSystem: '5 kW On-Grid Solar System',
-    avatarInitials: 'AD'
+    avatarInitials: 'PS'
   },
   {
     id: 'CUST-003',
-    name: 'Suresh Singhania',
-    email: 'suresh@gmail.com',
+    name: 'Vikram Rao',
+    email: 'vikram.rao@gmail.com',
     phone: '+91 98223 77889',
-    address: '402, Heritage Residency, Model Colony, Shivaji Nagar',
-    city: 'Pune',
-    state: 'Maharashtra',
-    pincode: '411016',
+    address: 'Plot 88, Jubilee Hills, Road No. 36',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    pincode: '500033',
     roofAreaSqFt: 1800,
     sanctionLoadKw: 15,
     installedSystem: '15 kW On-Grid Commercial Array',
-    avatarInitials: 'SS'
+    avatarInitials: 'VR'
   }
 ];

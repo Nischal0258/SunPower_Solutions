@@ -31,6 +31,8 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
   
   // Manual serial number entry state
   const [manualSerialInput, setManualSerialInput] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<'Solar Panels' | 'Inverters' | 'Batteries'>('Inverters');
+  const [serialError, setSerialError] = useState('');
 
   // Registered serials map (projectId -> array of serials)
   const [registeredSerials, setRegisteredSerials] = useState<Record<string, string[]>>({
@@ -51,16 +53,28 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
 
   const activeProject = projects.find(p => p.id === selectedProjectId) || projects[0];
 
-  const handleAddManualSerial = (serialToRegister?: string) => {
+  const handleAddManualSerial = (serialToRegister?: string, categoryOverride?: 'Solar Panels' | 'Inverters' | 'Batteries') => {
+    setSerialError('');
     const code = (serialToRegister || manualSerialInput).trim().toUpperCase();
+    
     if (!code) {
+      setSerialError('Please enter an equipment serial number.');
       showToast('Please enter an equipment serial number.', 'warning');
+      return;
+    }
+
+    // Alphanumeric format check (allows letters, numbers, hyphens)
+    const alphanumericRegex = /^[A-Z0-9\-_]{4,32}$/;
+    if (!alphanumericRegex.test(code)) {
+      setSerialError('Invalid format. Serial must be alphanumeric (letters, numbers, hyphens only, 4-32 characters).');
+      showToast('Invalid serial format. Alphanumeric characters only.', 'error');
       return;
     }
 
     const pid = activeProject?.id || 'PRJ-2026-042';
     const existing = registeredSerials[pid] || [];
     if (existing.includes(code)) {
+      setSerialError(`Serial number ${code} is already assigned to this order.`);
       showToast(`Serial number ${code} is already registered.`, 'warning');
       return;
     }
@@ -70,7 +84,8 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
       [pid]: [...existing, code]
     }));
     setManualSerialInput('');
-    showToast(`Serial number ${code} registered successfully.`, 'success');
+    setSerialError('');
+    showToast(`Hardware serial ${code} assigned to Order ${pid} successfully.`, 'success');
   };
 
   const handleRemoveSerial = (serialToRemove: string) => {
@@ -218,51 +233,108 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
             )}
           </div>
 
-          {/* Manual Serial Number Entry Field */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          {/* Manual Serial Number Entry Field & Allocation */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3.5">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-bold text-xs text-[#292724]">Manual Equipment Serial Number Registration</h4>
+                <h4 className="font-bold text-xs text-[#292724]">Manual Equipment Serial Number Entry</h4>
                 <p className="text-[11px] text-slate-500">
-                  Enter hardware serial numbers directly from equipment labels (no barcode scanner required).
+                  Enter alphanumeric equipment serial numbers directly from hardware nameplates (no barcode scanner required).
                 </p>
               </div>
               <KeyRound className="w-4 h-4 text-[#C66B45]" />
             </div>
 
-            {/* Input & Add Row */}
+            {/* Equipment Category Selector */}
             <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={manualSerialInput}
-                onChange={(e) => setManualSerialInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleAddManualSerial(); }}
-                placeholder="Enter serial number (e.g. INV-GW-5000-8831)"
-                className="flex-1 px-3 py-2 rounded-lg border border-[#E7E2D9] bg-white text-xs font-mono text-[#292724] focus:outline-none focus:border-[#C66B45] focus:ring-1 focus:ring-[#C66B45]"
-              />
-              <button
-                type="button"
-                onClick={() => handleAddManualSerial()}
-                className="px-4 py-2 rounded-lg bg-[#C66B45] hover:bg-[#C66B45]/90 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Register Serial</span>
-              </button>
+              <span className="text-[11px] font-semibold text-slate-600">Equipment Type:</span>
+              {(['Solar Panels', 'Inverters', 'Batteries'] as const).map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-[#292724] text-white shadow-2xs'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
 
-            {/* Quick Test Serial Presets */}
+            {/* Input & Assign to Order Button */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={manualSerialInput}
+                  onChange={(e) => {
+                    setManualSerialInput(e.target.value);
+                    if (serialError) setSerialError('');
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddManualSerial(); }}
+                  placeholder={
+                    selectedCategory === 'Solar Panels'
+                      ? 'Enter PV panel serial (e.g. PV-WA-540-9901)'
+                      : selectedCategory === 'Inverters'
+                      ? 'Enter inverter serial (e.g. INV-GW-5000-8831)'
+                      : 'Enter battery serial (e.g. BAT-PY-48100-2401)'
+                  }
+                  className={`flex-1 px-3 py-2 rounded-lg border text-xs font-mono text-[#292724] bg-white focus:outline-none focus:ring-1 ${
+                    serialError
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-400'
+                      : 'border-[#E7E2D9] focus:border-[#C66B45] focus:ring-[#C66B45]'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddManualSerial()}
+                  className="px-4 py-2 rounded-lg bg-[#C66B45] hover:bg-[#C66B45]/90 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Assign to Order</span>
+                </button>
+              </div>
+
+              {serialError && (
+                <p className="text-[11px] text-rose-600 font-medium pl-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3 shrink-0" />
+                  <span>{serialError}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Quick Test Serial Presets for Solar Panels, Inverters, Battery Units */}
             <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
-              <span className="text-slate-500">Quick Entry Presets:</span>
+              <span className="text-slate-500 font-medium">Quick Presets:</span>
               <button
                 type="button"
-                onClick={() => handleAddManualSerial('INV-GW-5000-8831')}
+                onClick={() => {
+                  setSelectedCategory('Solar Panels');
+                  handleAddManualSerial('PV-WA-540-9901');
+                }}
+                className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 font-mono text-[10px]"
+              >
+                + Panel: PV-WA-540-9901
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory('Inverters');
+                  handleAddManualSerial('INV-GW-5000-8831');
+                }}
                 className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 font-mono text-[10px]"
               >
                 + Inverter: INV-GW-5000-8831
               </button>
               <button
                 type="button"
-                onClick={() => handleAddManualSerial('BAT-PY-48100-2401')}
+                onClick={() => {
+                  setSelectedCategory('Batteries');
+                  handleAddManualSerial('BAT-PY-48100-2401');
+                }}
                 className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 font-mono text-[10px]"
               >
                 + Battery: BAT-PY-48100-2401

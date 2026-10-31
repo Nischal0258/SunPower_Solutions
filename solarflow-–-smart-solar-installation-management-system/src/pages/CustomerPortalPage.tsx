@@ -64,11 +64,37 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
     try {
       const stored = localStorage.getItem('sunpower_active_customer_persona');
       if (stored) {
-        const found = DEMO_CUSTOMERS.find(c => c.id === stored);
-        if (found) return found;
+        const foundDemo = DEMO_CUSTOMERS.find(c => c.id === stored);
+        if (foundDemo) return foundDemo;
+        const foundCust = DataService.getCustomers().find(c => c.id === stored);
+        if (foundCust) {
+          return {
+            id: foundCust.id,
+            name: foundCust.name,
+            email: foundCust.email,
+            phone: foundCust.phone,
+            address: foundCust.address,
+            city: foundCust.city,
+            state: foundCust.state,
+            pincode: foundCust.pincode,
+            roofAreaSqFt: foundCust.roofAreaSqFt || 1000,
+            sanctionLoadKw: foundCust.sanctionLoadKw || 5,
+            installedSystem: 'Solar Rooftop System',
+            avatarInitials: foundCust.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+          };
+        }
       }
     } catch {}
     return DEMO_CUSTOMERS[0];
+  });
+
+  const [hasUnreadOrders, setHasUnreadOrders] = useState<boolean>(() => {
+    try {
+      const isRead = localStorage.getItem(`sunpower_orders_read_${activeCustomer.id}`);
+      return isRead !== 'true';
+    } catch {
+      return false;
+    }
   });
 
   // 4 Intuitive Customer-Centric Tabs
@@ -111,7 +137,15 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
     setCheckoutAddress(activeCustomer.address);
     setRoofAreaSqFt(activeCustomer.roofAreaSqFt);
 
-    const handleDataUpdate = () => refreshOrders();
+    const handleDataUpdate = () => {
+      refreshOrders();
+      if (activeTab !== 'orders') {
+        setHasUnreadOrders(true);
+        try {
+          localStorage.setItem(`sunpower_orders_read_${activeCustomer.id}`, 'false');
+        } catch {}
+      }
+    };
     window.addEventListener('sunpower_data_updated', handleDataUpdate);
     window.addEventListener('storage', handleDataUpdate);
     return () => {
@@ -213,6 +247,10 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
       'success'
     );
     setActiveTab('orders');
+    setHasUnreadOrders(false);
+    try {
+      localStorage.setItem(`sunpower_orders_read_${activeCustomer.id}`, 'true');
+    } catch {}
     refreshOrders();
     setCustomNotes('');
   };
@@ -258,22 +296,7 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
 
         {/* Right Header Zone: Multi-Customer Persona Switcher + Profile Pill + Logout */}
         <div className="flex items-center gap-3">
-          {/* Multi-Customer Demo Persona Switcher */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 border border-white/15 text-xs">
-            <Users className="w-3.5 h-3.5 text-[#DBBA95]" />
-            <span className="text-white/70 text-[11px]">Demo Persona:</span>
-            <select
-              value={activeCustomer.id}
-              onChange={(e) => handleSwitchPersona(e.target.value)}
-              className="bg-transparent text-white font-semibold text-xs focus:outline-none cursor-pointer"
-            >
-              {DEMO_CUSTOMERS.map((c) => (
-                <option key={c.id} value={c.id} className="bg-[#292724] text-white">
-                  {c.name} ({c.city})
-                </option>
-              ))}
-            </select>
-          </div>
+
 
           {/* Customer Profile Pill */}
           <button
@@ -328,19 +351,19 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
         </div>
 
         {/* =======================================================================
-            4 INTUITIVE CUSTOMER-CENTRIC NAVIGATION TABS
+            CLEAN SEMANTIC CUSTOMER NAVIGATION TABS (WITHOUT NUMERIC PREFIXES)
             ======================================================================= */}
         <div className="flex items-center gap-2 border-b border-[#E7E2D9] pb-3 overflow-x-auto">
           <button
             onClick={() => setActiveTab('advisor')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
               activeTab === 'advisor'
-                ? 'bg-[#292724] text-white shadow-xs'
+                ? 'bg-[#292724] text-white shadow-xs font-bold'
                 : 'bg-white text-[#292724]/75 border border-[#E7E2D9] hover:bg-white'
             }`}
           >
             <Sparkles className="w-4 h-4 text-[#DBBA95]" />
-            <span>Tab 1: Overview & Solar Advisor</span>
+            <span>Overview</span>
           </button>
 
           <button
@@ -352,21 +375,27 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
             }`}
           >
             <Sliders className="w-4 h-4" />
-            <span>Tab 2: Configure & Place Order</span>
+            <span>Place Order / Solar Systems</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+            onClick={() => {
+              setActiveTab('orders');
+              setHasUnreadOrders(false);
+              try {
+                localStorage.setItem(`sunpower_orders_read_${activeCustomer.id}`, 'true');
+              } catch {}
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 relative ${
               activeTab === 'orders'
-                ? 'bg-[#292724] text-white shadow-xs'
+                ? 'bg-[#292724] text-white shadow-xs font-bold'
                 : 'bg-white text-[#292724]/75 border border-[#E7E2D9] hover:bg-white'
             }`}
           >
             <Clock className="w-4 h-4" />
-            <span>Tab 3: My Orders & Tracking</span>
-            {orders.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#C66B45] text-white">
+            <span>My Orders</span>
+            {hasUnreadOrders && orders.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#C66B45] text-white animate-pulse">
                 {orders.length}
               </span>
             )}
@@ -376,12 +405,12 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
             onClick={() => setActiveTab('hardware')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
               activeTab === 'hardware'
-                ? 'bg-[#292724] text-white shadow-xs'
+                ? 'bg-[#292724] text-white shadow-xs font-bold'
                 : 'bg-white text-[#292724]/75 border border-[#E7E2D9] hover:bg-white'
             }`}
           >
             <TrendingUp className="w-4 h-4" />
-            <span>Tab 4: My Hardware & System Performance</span>
+            <span>My Hardware & Performance</span>
           </button>
         </div>
 
@@ -964,8 +993,16 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-bold text-sm text-[#C66B45]">{order.id}</span>
                             <span className="text-xs text-slate-400">• Booked {order.timestamp}</span>
-                            <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                              {order.status}
+                            <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold border ${
+                              order.status === 'Pending Approval'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200 animate-pulse'
+                                : order.status === 'Technician Dispatched / Survey Scheduled'
+                                ? 'bg-sky-50 text-sky-800 border-sky-200 font-bold'
+                                : order.status === 'Commissioned'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : 'bg-slate-100 text-slate-800 border-slate-200'
+                            }`}>
+                              {order.status === 'Pending Approval' ? 'Pending Director Approval' : order.status}
                             </span>
                           </div>
                           <h4 className="font-bold text-sm text-[#292724] mt-1">

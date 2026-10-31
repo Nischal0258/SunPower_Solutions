@@ -52,18 +52,18 @@ function AppContent() {
     } catch (e) {
       console.warn('Failed to parse stored session:', e);
     }
-    // Default active session for Operations Manager
+    // Default active session for Managing Director & Operations
     return {
-      role: 'manager',
+      role: 'director',
       name: 'Dr. Singhania',
-      email: 'manager@gmail.com',
-      title: 'Operations Manager',
-      badge: 'Manager',
+      email: 'director@gmail.com',
+      title: 'Managing Director & Operations',
+      badge: 'Executive',
       avatarColor: 'bg-purple-600'
     };
   });
 
-  const currentRole: UserRole = session?.role || 'manager';
+  const currentRole: UserRole = session?.role || 'director';
   const roleInfo = USER_ROLES[currentRole];
 
   // Active navigation tab
@@ -139,14 +139,16 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogin = (role: UserRole = 'manager', userEmail?: string) => {
-    const rInfo = USER_ROLES[role] || USER_ROLES.manager;
+  const handleLogin = (role: UserRole = 'director', userEmail?: string) => {
+    const rInfo = USER_ROLES[role] || USER_ROLES.director;
     let userName = rInfo.name;
     let emailToUse = userEmail || `${role}@gmail.com`;
 
     if (role === 'customer') {
       const activePersonaId = localStorage.getItem('sunpower_active_customer_persona') || 'CUST-001';
-      const persona = DEMO_CUSTOMERS.find(c => c.id === activePersonaId) || DEMO_CUSTOMERS[0];
+      const persona = DEMO_CUSTOMERS.find(c => c.id === activePersonaId || (emailToUse && c.email.toLowerCase() === emailToUse.toLowerCase()))
+        || DataService.getCustomers().find(c => c.id === activePersonaId || (emailToUse && c.email.toLowerCase() === emailToUse.toLowerCase()))
+        || DEMO_CUSTOMERS[0];
       userName = persona.name;
       emailToUse = persona.email;
     }

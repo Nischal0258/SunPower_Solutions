@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { UserRole, USER_ROLES } from '../../types/roles';
 import { DEMO_CUSTOMERS } from '../../types';
+import { DataService } from '../../services/dataService';
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
@@ -117,7 +118,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   if (isCustomer) {
     try {
       const activePersonaId = localStorage.getItem('sunpower_active_customer_persona') || 'CUST-001';
-      const persona = DEMO_CUSTOMERS.find(c => c.id === activePersonaId) || DEMO_CUSTOMERS[0];
+      const persona = DEMO_CUSTOMERS.find(c => c.id === activePersonaId || (displayEmail && c.email.toLowerCase() === displayEmail.toLowerCase()))
+        || DataService.getCustomers().find(c => c.id === activePersonaId || (displayEmail && c.email.toLowerCase() === displayEmail.toLowerCase()))
+        || DEMO_CUSTOMERS[0];
       displayName = persona.name;
       displayEmail = persona.email;
       displayPhone = persona.phone;

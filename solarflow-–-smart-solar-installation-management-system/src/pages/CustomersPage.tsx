@@ -62,6 +62,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
     enquiryDate: new Date().toISOString().split('T')[0],
     leadStatus: 'New' as LeadStatus,
     roofAreaSqFt: 1000,
+    monthlyBill: 4500,
     sanctionLoadKw: 5,
     notes: ''
   });
@@ -87,8 +88,9 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
       state: '',
       pincode: '',
       enquiryDate: new Date().toISOString().split('T')[0],
-      leadStatus: 'New',
+      leadStatus: 'Lead / Inquiry',
       roofAreaSqFt: 1000,
+      monthlyBill: 4500,
       sanctionLoadKw: 5,
       notes: ''
     });
@@ -110,6 +112,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
       enquiryDate: c.enquiryDate,
       leadStatus: c.leadStatus,
       roofAreaSqFt: c.roofAreaSqFt || 1000,
+      monthlyBill: c.monthlyBill || 4500,
       sanctionLoadKw: c.sanctionLoadKw || 5,
       notes: c.notes || ''
     });
@@ -162,6 +165,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
       enquiryDate: formData.enquiryDate,
       leadStatus: formData.leadStatus,
       roofAreaSqFt: Number(formData.roofAreaSqFt) || 0,
+      monthlyBill: Number(formData.monthlyBill) || 0,
       sanctionLoadKw: Number(formData.sanctionLoadKw) || 0,
       notes: formData.notes.trim()
     });
@@ -221,7 +225,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
     ? DataService.getServiceTickets().filter(t => t.customerId === viewCustomer.id) 
     : [];
 
-  const statuses: ('All' | LeadStatus)[] = ['All', 'New', 'Contacted', 'Survey Scheduled', 'Converted', 'Lost'];
+  const statuses: ('All' | LeadStatus)[] = ['All', 'Lead / Inquiry', 'Order Placed', 'Site Survey', 'Installation', 'Commissioned', 'Converted', 'Lost'];
 
   return (
     <div className="space-y-5">
@@ -660,9 +664,11 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 onChange={(e) => setFormData({ ...formData, leadStatus: e.target.value as LeadStatus })}
                 className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-300"
               >
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Survey Scheduled">Survey Scheduled</option>
+                <option value="Lead / Inquiry">Lead / Inquiry</option>
+                <option value="Order Placed">Order Placed</option>
+                <option value="Site Survey">Site Survey</option>
+                <option value="Installation">Installation</option>
+                <option value="Commissioned">Commissioned</option>
                 <option value="Converted">Converted</option>
                 <option value="Lost">Lost</option>
               </select>
@@ -732,41 +738,112 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block font-semibold text-slate-900 mb-1">
-                Roof Area (Sq. Ft)
-              </label>
+          {/* Site Specs Input Form: Rooftop Area & Monthly Bill Sliders + Inputs */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-slate-900 text-xs">Site Technical Specifications</h4>
+                <p className="text-[11px] text-slate-500">Capture accurate premises load specs without complex cost predictors</p>
+              </div>
+            </div>
+
+            {/* Rooftop Area Slider + Input */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-slate-900 text-xs">
+                  Available Rooftop Area (Sq. Ft)
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={100}
+                    max={10000}
+                    step={50}
+                    value={formData.roofAreaSqFt}
+                    onChange={(e) => setFormData({ ...formData, roofAreaSqFt: Number(e.target.value) })}
+                    className="w-24 px-2 py-1 text-right text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#C66B45]"
+                  />
+                  <span className="text-[11px] text-slate-500 font-medium">sq.ft</span>
+                </div>
+              </div>
               <input
-                type="number"
+                type="range"
+                min={100}
+                max={10000}
+                step={50}
                 value={formData.roofAreaSqFt}
                 onChange={(e) => setFormData({ ...formData, roofAreaSqFt: Number(e.target.value) })}
-                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-slate-300"
+                className="w-full accent-[#C66B45] cursor-pointer"
               />
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>100 sq ft</span>
+                <span>5,000 sq ft</span>
+                <span>10,000 sq ft</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-900 mb-1">
-                Sanctioned Load (kW)
-              </label>
+            {/* Monthly Electricity Bill Slider + Input */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-slate-900 text-xs">
+                  Current Monthly Electricity Bill (₹)
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-600">₹</span>
+                  <input
+                    type="number"
+                    min={500}
+                    max={100000}
+                    step={250}
+                    value={formData.monthlyBill}
+                    onChange={(e) => setFormData({ ...formData, monthlyBill: Number(e.target.value) })}
+                    className="w-28 px-2 py-1 text-right text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#C66B45]"
+                  />
+                </div>
+              </div>
               <input
-                type="number"
-                value={formData.sanctionLoadKw}
-                onChange={(e) => setFormData({ ...formData, sanctionLoadKw: Number(e.target.value) })}
-                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-slate-300"
+                type="range"
+                min={500}
+                max={100000}
+                step={250}
+                value={formData.monthlyBill}
+                onChange={(e) => setFormData({ ...formData, monthlyBill: Number(e.target.value) })}
+                className="w-full accent-[#C66B45] cursor-pointer"
               />
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>₹500</span>
+                <span>₹50,000</span>
+                <span>₹1,00,000</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-900 mb-1">
-                Enquiry Date
-              </label>
-              <input
-                type="date"
-                value={formData.enquiryDate}
-                onChange={(e) => setFormData({ ...formData, enquiryDate: e.target.value })}
-                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-slate-300"
-              />
+            {/* Sanctioned Load and Enquiry Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+              <div>
+                <label className="block font-semibold text-slate-900 mb-1 text-[11px]">
+                  Sanctioned Grid Load (kW)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={formData.sanctionLoadKw}
+                  onChange={(e) => setFormData({ ...formData, sanctionLoadKw: Number(e.target.value) })}
+                  className="w-full p-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-[#C66B45]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-900 mb-1 text-[11px]">
+                  Enquiry Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.enquiryDate}
+                  onChange={(e) => setFormData({ ...formData, enquiryDate: e.target.value })}
+                  className="w-full p-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-[#C66B45]"
+                />
+              </div>
             </div>
           </div>
 

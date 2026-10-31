@@ -31,50 +31,53 @@ export const TECHNICIANS: Technician[] = [
 const INITIAL_CUSTOMERS: Customer[] = [
   {
     id: 'CUST-001',
-    name: 'Rajendra Joshi',
+    name: 'Aarav Mehta',
     phone: '+91 98201 54321',
-    email: 'r.joshi@greentech.org',
+    email: 'aarav.mehta@gmail.com',
     address: 'Plot 42, Baner Hills, Pashan Highway',
     city: 'Pune',
     state: 'Maharashtra',
     pincode: '411045',
     enquiryDate: '2026-09-12',
-    leadStatus: 'Converted',
+    leadStatus: 'Commissioned',
     roofAreaSqFt: 1400,
     sanctionLoadKw: 10,
-    notes: 'Three-phase sanctioned load. Requires shadow-free RCC elevated structure.',
+    monthlyBill: 8500,
+    notes: 'Three-phase sanctioned load. 10 kW Hybrid Solar System commissioned.',
     createdAt: '2026-09-12T10:30:00Z'
   },
   {
     id: 'CUST-002',
-    name: 'Ananya Deshpande',
+    name: 'Pooja Sharma',
     phone: '+91 98112 33456',
-    email: 'ananya.deshpande@gmail.com',
-    address: 'Villa 18, Greenwood Estates, Whitefield',
+    email: 'pooja.sharma@gmail.com',
+    address: 'Villa 24, Palm Meadows, Whitefield',
     city: 'Bengaluru',
     state: 'Karnataka',
     pincode: '560066',
     enquiryDate: '2026-09-28',
-    leadStatus: 'Survey Scheduled',
+    leadStatus: 'Site Survey',
     roofAreaSqFt: 950,
     sanctionLoadKw: 6,
-    notes: 'Requested hybrid 5 kW system with 10 kWh battery backup due to frequent evening grid cuts.',
+    monthlyBill: 4500,
+    notes: 'Requested 5 kW on-grid system. Site survey dispatched with lead technician.',
     createdAt: '2026-09-28T14:15:00Z'
   },
   {
     id: 'CUST-003',
-    name: 'Suresh Singhania',
-    phone: '+91 99200 88712',
-    email: 'suresh@singhaniafabrics.com',
-    address: 'GIDC Industrial Sector 3, Sanand',
-    city: 'Ahmedabad',
-    state: 'Gujarat',
-    pincode: '382110',
+    name: 'Vikram Rao',
+    phone: '+91 98223 77889',
+    email: 'vikram.rao@gmail.com',
+    address: 'Plot 88, Jubilee Hills, Road No. 36',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    pincode: '500033',
     enquiryDate: '2026-10-02',
-    leadStatus: 'Converted',
-    roofAreaSqFt: 3500,
-    sanctionLoadKw: 25,
-    notes: 'Commercial rooftop system. Tin shed mounting structure with walk-way clamps.',
+    leadStatus: 'Order Placed',
+    roofAreaSqFt: 1800,
+    sanctionLoadKw: 15,
+    monthlyBill: 16000,
+    notes: 'Commercial 15 kW array order placed. Pending Director approval & technician dispatch.',
     createdAt: '2026-10-02T09:00:00Z'
   },
   {
@@ -333,7 +336,7 @@ const INITIAL_QUOTATIONS: Quotation[] = [
     id: 'QUO-002',
     quotationNumber: 'QT-2026-094',
     customerId: 'CUST-002',
-    customerName: 'Ananya Deshpande',
+    customerName: 'Pooja Sharma',
     customerPhone: '+91 98112 33456',
     customerAddress: 'Villa 18, Greenwood Estates, Whitefield, Bengaluru',
     systemType: 'Hybrid',
@@ -358,7 +361,7 @@ const INITIAL_QUOTATIONS: Quotation[] = [
     id: 'QUO-003',
     quotationNumber: 'QT-2026-101',
     customerId: 'CUST-003',
-    customerName: 'Suresh Singhania',
+    customerName: 'Vikram Rao',
     customerPhone: '+91 99200 88712',
     customerAddress: 'GIDC Industrial Sector 3, Sanand, Ahmedabad',
     systemType: 'On-grid',
@@ -460,7 +463,7 @@ const INITIAL_PROJECTS: InstallationProject[] = [
     quotationId: 'QUO-002',
     quotationNumber: 'QT-2026-094',
     customerId: 'CUST-002',
-    customerName: 'Ananya Deshpande',
+    customerName: 'Pooja Sharma',
     customerPhone: '+91 98112 33456',
     customerAddress: 'Villa 18, Greenwood Estates, Whitefield, Bengaluru',
     capacityKw: 6,
@@ -488,7 +491,7 @@ const INITIAL_PROJECTS: InstallationProject[] = [
     id: 'PRJ-003',
     projectId: 'PRJ-2026-046',
     customerId: 'CUST-003',
-    customerName: 'Suresh Singhania',
+    customerName: 'Vikram Rao',
     customerPhone: '+91 99200 88712',
     customerAddress: 'GIDC Industrial Sector 3, Sanand, Ahmedabad',
     capacityKw: 25,
@@ -654,7 +657,7 @@ const INITIAL_SERVICE_TICKETS: ServiceTicket[] = [
 const INITIAL_TASKS: BusinessTask[] = [
   {
     id: 'TSK-01',
-    title: 'Follow up with Ananya Deshpande on Quotation #QT-2026-094',
+    title: 'Follow up with Pooja Sharma on Quotation #QT-2026-094',
     category: 'Quotation',
     dueDate: 'Today, 2:00 PM',
     priority: 'High',
@@ -672,7 +675,7 @@ const INITIAL_TASKS: BusinessTask[] = [
     actionType: 'assign_tech',
     targetId: 'PRJ-003',
     completed: false,
-    targetDescription: 'Suresh Singhania needs structural roof load certification.'
+    targetDescription: 'Vikram Rao needs structural roof load certification.'
   },
   {
     id: 'TSK-03',
@@ -711,7 +714,7 @@ const INITIAL_ACTIVITIES: ActivityLog[] = [
     id: 'ACT-02',
     type: 'quotation',
     title: 'Quotation QT-2026-094 Sent to Customer',
-    description: '₹4,41,771 proposal for 6 kW hybrid setup dispatched to Ananya Deshpande.',
+    description: '₹4,41,771 proposal for 6 kW hybrid setup dispatched to Pooja Sharma.',
     timestamp: '2 days ago',
     actor: 'Sunil Rao (Sales Eng.)'
   },
@@ -783,8 +786,8 @@ export const INITIAL_CUSTOMER_ORDERS: CustomerOrder[] = [
   {
     id: 'ORD-2026-088',
     customerId: 'CUST-001',
-    customerName: 'Rajendra Joshi',
-    customerEmail: 'customer@gmail.com',
+    customerName: 'Aarav Mehta',
+    customerEmail: 'aarav.mehta@gmail.com',
     contactNumber: '+91 98201 54321',
     installationAddress: 'Plot 42, Baner Hills, Pashan Highway',
     city: 'Pune',
@@ -809,10 +812,10 @@ export const INITIAL_CUSTOMER_ORDERS: CustomerOrder[] = [
   {
     id: 'ORD-2026-092',
     customerId: 'CUST-002',
-    customerName: 'Ananya Deshpande',
-    customerEmail: 'ananya@gmail.com',
+    customerName: 'Pooja Sharma',
+    customerEmail: 'pooja.sharma@gmail.com',
     contactNumber: '+91 98112 33456',
-    installationAddress: 'Villa 18, Greenwood Estates, Whitefield',
+    installationAddress: 'Villa 24, Palm Meadows, Whitefield',
     city: 'Bengaluru',
     state: 'Karnataka',
     systemType: 'On-grid',
@@ -821,42 +824,43 @@ export const INITIAL_CUSTOMER_ORDERS: CustomerOrder[] = [
     centralSubsidy: 78000,
     stateSubsidy: 10000,
     netPayable: 222000,
-    status: 'Hardware Allocated',
-    progressPercent: 55,
+    status: 'Technician Dispatched / Survey Scheduled',
+    progressPercent: 35,
     projectId: 'PRJ-2026-044',
     quotationId: 'QUO-2026-003',
     assignedTechnicianName: 'Rajesh & Team',
     assignedTechnicianPhone: '+91 98600 55891',
+    scheduledSurveyDate: '2026-11-03',
     selectedAddons: ['7.4 kW Smart EV Fast Charger'],
-    documentUrl: 'Order Confirmation & Material Allocation Docket',
+    documentUrl: 'Order Confirmation & Survey Docket',
     timestamp: '2026-10-29',
     notes: '5 kW On-Grid Rooftop System with Net-Metering liaison under BESCOM'
   },
   {
     id: 'ORD-2026-095',
     customerId: 'CUST-003',
-    customerName: 'Suresh Singhania',
-    customerEmail: 'suresh@gmail.com',
+    customerName: 'Vikram Rao',
+    customerEmail: 'vikram.rao@gmail.com',
     contactNumber: '+91 98223 77889',
-    installationAddress: '402, Heritage Residency, Model Colony, Shivaji Nagar',
-    city: 'Pune',
-    state: 'Maharashtra',
+    installationAddress: 'Plot 88, Jubilee Hills, Road No. 36',
+    city: 'Hyderabad',
+    state: 'Telangana',
     systemType: 'On-grid',
     capacityKw: 15,
     grossCost: 930000,
     centralSubsidy: 78000,
     stateSubsidy: 12000,
     netPayable: 840000,
-    status: 'Site Survey Scheduled',
-    progressPercent: 35,
+    status: 'Pending Approval',
+    progressPercent: 15,
     projectId: 'PRJ-2026-045',
     quotationId: 'QUO-2026-005',
     assignedTechnicianName: 'Rajesh & Team',
     assignedTechnicianPhone: '+91 98600 55891',
     selectedAddons: ['Annual Solar O&M Care Plan'],
-    documentUrl: 'Site Feasibility Schedule Confirmation',
+    documentUrl: 'Order Confirmation & Feasibility Request',
     timestamp: '2026-10-30',
-    notes: '15 kW Commercial Rooftop Solar Array with LT 3-phase synchronization'
+    notes: '15 kW Commercial Rooftop Solar Array awaiting Director review and technician assignment'
   }
 ];
 
@@ -864,8 +868,8 @@ export const INITIAL_HELPDESK_TICKETS: HelpdeskTicket[] = [
   {
     id: 'TKT-2026-101',
     customerId: 'CUST-002',
-    customerName: 'Ananya Deshpande',
-    customerEmail: 'ananya@gmail.com',
+    customerName: 'Pooja Sharma',
+    customerEmail: 'pooja.sharma@gmail.com',
     customerPhone: '+91 98112 33456',
     customerAddress: 'Villa 18, Greenwood Estates, Whitefield, Bengaluru',
     orderId: 'ORD-2026-092',
@@ -877,7 +881,7 @@ export const INITIAL_HELPDESK_TICKETS: HelpdeskTicket[] = [
       {
         id: 'msg-1',
         sender: 'customer',
-        senderName: 'Ananya Deshpande',
+        senderName: 'Pooja Sharma',
         text: 'Hello, the hardware has arrived at my Whitefield site. When will the BESCOM official inspection for the bi-directional meter take place?',
         timestamp: '11:20 AM'
       },
@@ -1472,7 +1476,7 @@ export class DataService {
       centralSubsidy: payload.centralSubsidy,
       stateSubsidy: payload.stateSubsidy,
       netPayable: payload.netPayable,
-      status: 'Order Placed',
+      status: 'Pending Approval',
       progressPercent: 15,
       projectId: prjId,
       quotationId: quoId,
@@ -1610,6 +1614,71 @@ export class DataService {
     return newOrder;
   }
 
+  public static approveOrderAndDispatchTech(
+    orderId: string,
+    technicianId: string,
+    scheduledDate: string,
+    notes?: string
+  ): boolean {
+    const data = this.load();
+    if (!data.customerOrders) data.customerOrders = [...INITIAL_CUSTOMER_ORDERS];
+    const order = data.customerOrders.find(o => o.id === orderId);
+    if (!order) return false;
+
+    const tech = TECHNICIANS.find(t => t.id === technicianId) || TECHNICIANS[0];
+
+    order.status = 'Technician Dispatched / Survey Scheduled';
+    order.progressPercent = 35;
+    order.assignedTechnicianName = tech.name;
+    order.assignedTechnicianPhone = tech.phone;
+    order.scheduledSurveyDate = scheduledDate;
+    if (notes) {
+      order.notes = (order.notes ? order.notes + ' | ' : '') + `Director notes: ${notes}`;
+    }
+
+    // Update associated InstallationProject
+    if (order.projectId) {
+      const proj = data.projects.find(p => p.id === order.projectId || p.projectId === order.projectId);
+      if (proj) {
+        proj.stage = 'Installation Scheduled';
+        proj.progressPercent = 35;
+        proj.technicianId = tech.id;
+        proj.technicianName = tech.name;
+        proj.surveyDate = scheduledDate;
+      }
+    }
+
+    // Auto-advance customer lead status
+    const customer = data.customers.find(c => c.id === order.customerId || (c.email && c.email.toLowerCase() === order.customerEmail.toLowerCase()));
+    if (customer) {
+      customer.leadStatus = 'Site Survey';
+    }
+
+    // Add activity log
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'project',
+      title: `Order Approved: ${order.id}`,
+      description: `Director approved order ${order.id} for ${order.customerName}. Technician ${tech.name} dispatched for site survey on ${scheduledDate}.`,
+      timestamp: new Date().toISOString(),
+      actor: 'Dr. Singhania (Director)'
+    });
+
+    // Add notification
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Order ${order.id} Approved & Dispatched`,
+      message: `${tech.name} scheduled for site survey at ${order.customerName}'s property on ${scheduledDate}.`,
+      type: 'info',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return true;
+  }
+
   public static updateCustomerOrderStatus(orderId: string, status: CustomerOrderStatus): boolean {
     const data = this.load();
     if (!data.customerOrders) data.customerOrders = [...INITIAL_CUSTOMER_ORDERS];
@@ -1617,7 +1686,9 @@ export class DataService {
     if (!order) return false;
 
     const progressMap: Record<CustomerOrderStatus, number> = {
+      'Pending Approval': 15,
       'Order Placed': 15,
+      'Technician Dispatched / Survey Scheduled': 35,
       'Site Survey Scheduled': 35,
       'Hardware Allocated': 55,
       'Installation In Progress': 80,

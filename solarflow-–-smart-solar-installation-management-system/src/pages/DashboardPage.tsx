@@ -18,7 +18,11 @@ import {
 import { NavTab, UserRole } from '../types/roles';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { DataService } from '../services/dataService';
-import { BusinessTask, InstallationProject, Quotation, ServiceTicket, InventoryItem } from '../types';
+import { BusinessTask, InstallationProject, Quotation, ServiceTicket, InventoryItem, CustomerOrder } from '../types';
+import { TECHNICIANS } from '../services/dataService';
+import { Modal } from '../components/common/Modal';
+import { useToast } from '../components/common/Toast';
+import { Truck } from 'lucide-react';
 
 interface DashboardPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
@@ -47,6 +51,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [inventory, setInventory] = React.useState<InventoryItem[]>(DataService.getInventory());
   const [tickets, setTickets] = React.useState<ServiceTicket[]>(DataService.getServiceTickets());
   const [activities, setActivities] = React.useState(DataService.getActivities());
+  const [customerOrders, setCustomerOrders] = React.useState<CustomerOrder[]>(() => DataService.getCustomerOrders());
+  
+  // Approval & Dispatch Modal State
+  const { showToast } = useToast();
+  const [selectedOrderForApproval, setSelectedOrderForApproval] = React.useState<CustomerOrder | null>(null);
+  const [selectedTechId, setSelectedTechId] = React.useState('TECH-001');
+  const [scheduledDate, setScheduledDate] = React.useState('2026-11-01');
+  const [dispatchNotes, setDispatchNotes] = React.useState('Conduct shadow profiling, azimuth verification, and RCC anchor pull test.');
 
   const refreshDashboard = React.useCallback(() => {
     setTasks(DataService.getTasks());
@@ -55,6 +67,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     setInventory(DataService.getInventory());
     setTickets(DataService.getServiceTickets());
     setActivities(DataService.getActivities());
+    setCustomerOrders(DataService.getCustomerOrders());
   }, []);
 
   React.useEffect(() => {
@@ -66,6 +79,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       window.removeEventListener('storage', refreshDashboard);
     };
   }, [refreshDashboard]);
+
+
+  const handleOpenApproveModal = (order: CustomerOrder) => {
+    setSelectedOrderForApproval(order);
+    setSelectedTechId(TECHNICIANS[0]?.id || 'TECH-001');
+    setScheduledDate(new Date(Date.now() + 86400000).toISOString().split('T')[0]);
+    setDispatchNotes('Conduct shadow profiling, azimuth verification, and RCC anchor pull test.');
+  };
+
+  const handleConfirmDispatch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrderForApproval) return;
+
+    DataService.approveOrderAndDispatchTech(
+      selectedOrderForApproval.id,
+      selectedTechId,
+      scheduledDate,
+      dispatchNotes
+    );
+
+    showToast(`Order ${selectedOrderForApproval.id} approved! Field technician dispatched for site survey.`, 'success');
+    setSelectedOrderForApproval(null);
+    refreshDashboard();
+  };
+
+  const pendingOrders = customerOrders.filter(o => o.status === 'Pending Approval');
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -113,6 +152,57 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Customer Orders Awaiting Director Approval Banner */}
+      {pendingOrders.length > 0 && (
+        <div className="bg-amber-50/70 border border-amber-300/80 rounded-2xl p-5 shadow-xs space-y-3 animate-in fade-in">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+              <h3 className="font-bold text-sm text-slate-900">
+                Customer Solar Orders Awaiting Director Approval ({pendingOrders.length})
+              </h3>
+            </div>
+            <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+              Pipeline Action Required
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {pendingOrders.map(order => (
+              <div
+                key={order.id}
+                className="bg-white p-4 rounded-xl border border-amber-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-slate-900">{order.id}</span>
+                    <span className="text-slate-400">·</span>
+                    <span className="font-bold text-slate-800">{order.customerName}</span>
+                    <span className="text-slate-400">·</span>
+                    <span className="font-semibold text-slate-700">{order.capacityKw} kW {order.systemType}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                      Pending Approval
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Installation Premises: {order.installationAddress}, {order.city} · Net Contract Value: <strong className="text-slate-900 font-mono">₹{order.netPayable.toLocaleString('en-IN')}</strong>
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenApproveModal(order)}
+                  className="px-4 py-2 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all self-start sm:self-auto shrink-0"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Approve Order</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Top Welcome & Primary Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-xs">
         <div>
@@ -506,6 +596,100 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
       </div>
+      {/* Assign Field Technician & Dispatch Modal */}
+      {selectedOrderForApproval && (
+        <Modal
+          isOpen={!!selectedOrderForApproval}
+          onClose={() => setSelectedOrderForApproval(null)}
+          title={`Approve & Dispatch: ${selectedOrderForApproval.id}`}
+          subtitle="Assign certified field technician for on-site technical survey & feasibility sign-off"
+          maxWidth="lg"
+        >
+          <form onSubmit={handleConfirmDispatch} className="space-y-4 text-xs">
+            {/* Customer Summary Card */}
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900">{selectedOrderForApproval.customerName}</span>
+                <span className="font-mono text-[11px] text-[#C66B45] font-bold">
+                  {selectedOrderForApproval.capacityKw} kW {selectedOrderForApproval.systemType}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Premises: {selectedOrderForApproval.installationAddress}, {selectedOrderForApproval.city}
+              </p>
+              <p className="text-[11px] text-slate-500 font-mono">
+                Customer Phone: {selectedOrderForApproval.contactNumber} · Email: {selectedOrderForApproval.customerEmail}
+              </p>
+            </div>
+
+            {/* Technician Selection */}
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">
+                Assign Field Lead Technician *
+              </label>
+              <select
+                value={selectedTechId}
+                onChange={(e) => setSelectedTechId(e.target.value)}
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              >
+                <option value="TECH-001">Rajesh & Team — Lead Field Installation Crew (Pune Unit)</option>
+                {TECHNICIANS.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} — {t.certifications} ({t.activeProjects} active projects)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Scheduled Survey Date */}
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">
+                Scheduled Survey / Inspection Date *
+              </label>
+              <input
+                type="date"
+                required
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-[#C66B45]"
+              />
+            </div>
+
+            {/* Field Instructions & Notes */}
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">
+                Technical Survey Notes & Checklist Directives
+              </label>
+              <textarea
+                rows={3}
+                value={dispatchNotes}
+                onChange={(e) => setDispatchNotes(e.target.value)}
+                placeholder="Specify requirements for azimuth measurement, water tank clearance, shadow profiling, or DISCOM earthing..."
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              />
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSelectedOrderForApproval(null)}
+                className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-lg bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold flex items-center gap-1.5 shadow-sm"
+              >
+                <Truck className="w-4 h-4" />
+                <span>Confirm & Dispatch Technician</span>
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
     </div>
   );
 };
