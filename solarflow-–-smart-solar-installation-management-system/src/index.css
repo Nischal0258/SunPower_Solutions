@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-ivory: #F5F3EF;
+    --color-warm-beige: #DBBA95;
+    --color-graphite: #292724;
+    --color-white: #FFFFFF;
+    --color-stone: #E7E2D9;
+    --color-burnt-orange: #C66B45;
+    --color-amber: #D9A441;
+  }
+
+  body {
+    background-color: #F5F3EF;
+    color: #292724;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom scrollbars matching the stone and graphite palette */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F3EF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #DBBA95;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C66B45;
+}
+
+/* Print styles for quotations and work orders */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #292724 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+}
