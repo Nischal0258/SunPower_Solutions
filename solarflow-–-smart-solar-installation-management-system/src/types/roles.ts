@@ -14,7 +14,6 @@ export type UserRole =
   | 'manager'       // Operations Manager (Dr. Singhania)
   | 'director'      // Managing Director / Executive
   | 'sales'         // Sales & CRM Lead (Priya)
-  | 'surveyor'      // Field Site Surveyor (Manoj Kumar)
   | 'warehouse'     // Warehouse & Logistics (Vikram Singh)
   | 'technician'    // Lead Field Technician (Rajesh & Team)
   | 'support'       // Helpdesk & RMA Support Agent (Rohan)
@@ -84,35 +83,24 @@ export const USER_ROLES: Record<UserRole, RoleInfo> = {
     description: 'Lead intake, feasibility checks & quotation generation',
     allowedTabs: ['customers', 'quotations', 'installations', 'warranties', 'reports'],
   },
-  surveyor: {
-    id: 'surveyor',
-    title: 'Field Site Surveyor',
-    name: 'Manoj Kumar',
-    badge: 'Surveyor',
-    avatarColor: 'bg-blue-600',
-    recommendedTab: 'installations',
-    description: 'Rooftop azimuth, tilt angle, shading & earthing approvals',
-    // Strictly restricted exclusively to site feasibility surveys. No access to CRM, quotes, P&L, or settings!
-    allowedTabs: ['installations'],
-  },
   warehouse: {
     id: 'warehouse',
-    title: 'Warehouse & Logistics',
+    title: 'Warehouse & Logistics Staff',
     name: 'Vikram Singh',
     badge: 'Warehouse',
     avatarColor: 'bg-emerald-600',
     recommendedTab: 'warehouse',
-    description: 'Order dispatch, inverter manual serial entry & warranty clock initiation',
-    allowedTabs: ['warehouse', 'inventory', 'installations', 'warranties'],
+    description: 'Core inventory tracking, stock replenishment, manual serial registration & order fulfillment only',
+    allowedTabs: ['warehouse', 'inventory'],
   },
   technician: {
     id: 'technician',
-    title: 'Installation Crew Lead',
+    title: 'Lead Field Technician & Surveyor',
     name: 'Rajesh & Team',
     badge: 'Field Tech',
     avatarColor: 'bg-cyan-600',
     recommendedTab: 'installations',
-    description: 'Rooftop mounting, photo QA audit & customer signature sign-off',
+    description: 'On-site technical surveys, rooftop mounting, photo QA audit, warranties & service ticket creation',
     allowedTabs: ['installations', 'tickets', 'warranties'],
   },
   support: {

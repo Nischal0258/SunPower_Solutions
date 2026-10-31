@@ -1,4 +1,11 @@
 import {
+  SystemType,
+  CustomerOrder,
+  CustomerOrderStatus,
+  HelpdeskTicket,
+  HelpdeskMessage,
+  CustomerPersona,
+  DEMO_CUSTOMERS,
   Customer,
   Quotation,
   InventoryItem,
@@ -757,6 +764,8 @@ const INITIAL_NOTIFICATIONS: SystemNotification[] = [
 ];
 
 export interface AppStateData {
+  customerOrders?: CustomerOrder[];
+  helpdeskTickets?: HelpdeskTicket[];
   customers: Customer[];
   inventory: InventoryItem[];
   stockMovements: StockMovement[];
@@ -769,12 +778,166 @@ export interface AppStateData {
   notifications: SystemNotification[];
 }
 
+
+export const INITIAL_CUSTOMER_ORDERS: CustomerOrder[] = [
+  {
+    id: 'ORD-2026-088',
+    customerId: 'CUST-001',
+    customerName: 'Rajendra Joshi',
+    customerEmail: 'customer@gmail.com',
+    contactNumber: '+91 98201 54321',
+    installationAddress: 'Plot 42, Baner Hills, Pashan Highway',
+    city: 'Pune',
+    state: 'Maharashtra',
+    systemType: 'Hybrid',
+    capacityKw: 10,
+    grossCost: 880000,
+    centralSubsidy: 78000,
+    stateSubsidy: 12000,
+    netPayable: 790000,
+    status: 'Commissioned',
+    progressPercent: 100,
+    projectId: 'PRJ-2026-042',
+    quotationId: 'QUO-2026-001',
+    assignedTechnicianName: 'Rajesh & Team',
+    assignedTechnicianPhone: '+91 98600 55891',
+    selectedAddons: ['5.12 kWh LiFePO4 Battery Storage Expansion'],
+    documentUrl: 'Official Handover & Net-Metering Certificate',
+    timestamp: '2026-10-24',
+    notes: '10 kW Residential Hybrid Solar System with 10.24kWh reserve storage'
+  },
+  {
+    id: 'ORD-2026-092',
+    customerId: 'CUST-002',
+    customerName: 'Ananya Deshpande',
+    customerEmail: 'ananya@gmail.com',
+    contactNumber: '+91 98112 33456',
+    installationAddress: 'Villa 18, Greenwood Estates, Whitefield',
+    city: 'Bengaluru',
+    state: 'Karnataka',
+    systemType: 'On-grid',
+    capacityKw: 5,
+    grossCost: 310000,
+    centralSubsidy: 78000,
+    stateSubsidy: 10000,
+    netPayable: 222000,
+    status: 'Hardware Allocated',
+    progressPercent: 55,
+    projectId: 'PRJ-2026-044',
+    quotationId: 'QUO-2026-003',
+    assignedTechnicianName: 'Rajesh & Team',
+    assignedTechnicianPhone: '+91 98600 55891',
+    selectedAddons: ['7.4 kW Smart EV Fast Charger'],
+    documentUrl: 'Order Confirmation & Material Allocation Docket',
+    timestamp: '2026-10-29',
+    notes: '5 kW On-Grid Rooftop System with Net-Metering liaison under BESCOM'
+  },
+  {
+    id: 'ORD-2026-095',
+    customerId: 'CUST-003',
+    customerName: 'Suresh Singhania',
+    customerEmail: 'suresh@gmail.com',
+    contactNumber: '+91 98223 77889',
+    installationAddress: '402, Heritage Residency, Model Colony, Shivaji Nagar',
+    city: 'Pune',
+    state: 'Maharashtra',
+    systemType: 'On-grid',
+    capacityKw: 15,
+    grossCost: 930000,
+    centralSubsidy: 78000,
+    stateSubsidy: 12000,
+    netPayable: 840000,
+    status: 'Site Survey Scheduled',
+    progressPercent: 35,
+    projectId: 'PRJ-2026-045',
+    quotationId: 'QUO-2026-005',
+    assignedTechnicianName: 'Rajesh & Team',
+    assignedTechnicianPhone: '+91 98600 55891',
+    selectedAddons: ['Annual Solar O&M Care Plan'],
+    documentUrl: 'Site Feasibility Schedule Confirmation',
+    timestamp: '2026-10-30',
+    notes: '15 kW Commercial Rooftop Solar Array with LT 3-phase synchronization'
+  }
+];
+
+export const INITIAL_HELPDESK_TICKETS: HelpdeskTicket[] = [
+  {
+    id: 'TKT-2026-101',
+    customerId: 'CUST-002',
+    customerName: 'Ananya Deshpande',
+    customerEmail: 'ananya@gmail.com',
+    customerPhone: '+91 98112 33456',
+    customerAddress: 'Villa 18, Greenwood Estates, Whitefield, Bengaluru',
+    orderId: 'ORD-2026-092',
+    subject: 'Net-metering bi-directional meter installation status',
+    category: 'Installation',
+    status: 'In Progress',
+    priority: 'High',
+    messages: [
+      {
+        id: 'msg-1',
+        sender: 'customer',
+        senderName: 'Ananya Deshpande',
+        text: 'Hello, the hardware has arrived at my Whitefield site. When will the BESCOM official inspection for the bi-directional meter take place?',
+        timestamp: '11:20 AM'
+      },
+      {
+        id: 'msg-2',
+        sender: 'agent',
+        senderName: 'Rohan Mehra (Support Lead)',
+        text: 'Hello Ananya, our lead technician Rajesh has filed the online docket with the BESCOM division office today. The joint inspection is scheduled for Tuesday morning at 10:30 AM.',
+        timestamp: '02:45 PM'
+      }
+    ],
+    createdAt: '2026-10-30T05:50:00Z',
+    updatedAt: '2026-10-30T09:15:00Z'
+  },
+  {
+    id: 'TKT-2026-102',
+    customerId: 'CUST-001',
+    customerName: 'Rajendra Joshi',
+    customerEmail: 'customer@gmail.com',
+    customerPhone: '+91 98201 54321',
+    customerAddress: 'Plot 42, Baner Hills, Pashan Highway, Pune',
+    orderId: 'ORD-2026-088',
+    subject: 'PM Surya Ghar direct benefit subsidy transfer timeline',
+    category: 'Subsidy',
+    status: 'Resolved',
+    priority: 'Normal',
+    messages: [
+      {
+        id: 'msg-3',
+        sender: 'customer',
+        senderName: 'Rajendra Joshi',
+        text: 'How many days after net-meter synchronization will the ₹78,000 central subsidy be credited to my bank account?',
+        timestamp: 'Yesterday'
+      },
+      {
+        id: 'msg-4',
+        sender: 'agent',
+        senderName: 'Rohan Mehra (Support Lead)',
+        text: 'Hi Rajendra, National Portal DBT processing takes approximately 30 to 45 business days after MSEDCL signs off the commissioning certificate. Your bank details and Aadhaar match have already been verified.',
+        timestamp: 'Yesterday'
+      }
+    ],
+    createdAt: '2026-10-29T10:15:00Z',
+    updatedAt: '2026-10-29T11:30:00Z'
+  }
+];
+
 export class DataService {
   private static load(): AppStateData {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (!parsed.customerOrders || parsed.customerOrders.length === 0) {
+          parsed.customerOrders = INITIAL_CUSTOMER_ORDERS;
+        }
+        if (!parsed.helpdeskTickets || parsed.helpdeskTickets.length === 0) {
+          parsed.helpdeskTickets = INITIAL_HELPDESK_TICKETS;
+        }
+        return parsed;
       }
     } catch {
       // fallback to initial
@@ -1253,5 +1416,329 @@ export class DataService {
     const data = this.load();
     data.notifications.forEach(n => { n.read = true; });
     this.save(data);
+  }
+
+
+  // ==========================================================================
+  // CUSTOMER ORDERS & REAL-TIME CROSS-ROLE ORDER MANAGEMENT
+  // ==========================================================================
+
+  public static getCustomerOrders(customerId?: string): CustomerOrder[] {
+    const data = this.load();
+    const orders = data.customerOrders || INITIAL_CUSTOMER_ORDERS;
+    if (customerId) {
+      return orders.filter(o => o.customerId === customerId);
+    }
+    return orders;
+  }
+
+  public static placeCustomerOrder(payload: {
+    customerId: string;
+    customerName: string;
+    customerEmail: string;
+    contactNumber: string;
+    installationAddress: string;
+    city?: string;
+    state?: string;
+    systemType: SystemType;
+    capacityKw: number;
+    grossCost: number;
+    centralSubsidy: number;
+    stateSubsidy: number;
+    netPayable: number;
+    selectedAddons?: string[];
+    notes?: string;
+  }): CustomerOrder {
+    const data = this.load();
+    const orderNum = Math.floor(100 + Math.random() * 900);
+    const orderId = `ORD-2026-0${orderNum}`;
+    const prjId = `PRJ-2026-0${orderNum}`;
+    const quoId = `QUO-2026-0${orderNum}`;
+    const now = new Date().toISOString();
+    const dateStr = now.split('T')[0];
+
+    const newOrder: CustomerOrder = {
+      id: orderId,
+      customerId: payload.customerId,
+      customerName: payload.customerName,
+      customerEmail: payload.customerEmail,
+      contactNumber: payload.contactNumber,
+      installationAddress: payload.installationAddress,
+      city: payload.city || 'Pune',
+      state: payload.state || 'Maharashtra',
+      systemType: payload.systemType,
+      capacityKw: payload.capacityKw,
+      grossCost: payload.grossCost,
+      centralSubsidy: payload.centralSubsidy,
+      stateSubsidy: payload.stateSubsidy,
+      netPayable: payload.netPayable,
+      status: 'Order Placed',
+      progressPercent: 15,
+      projectId: prjId,
+      quotationId: quoId,
+      assignedTechnicianName: 'Rajesh & Team',
+      assignedTechnicianPhone: '+91 98600 55891',
+      selectedAddons: payload.selectedAddons || [],
+      documentUrl: 'Order Confirmation & Advance Invoice',
+      timestamp: dateStr,
+      notes: payload.notes || `${payload.capacityKw} kW ${payload.systemType} Turnkey Order`
+    };
+
+    if (!data.customerOrders) data.customerOrders = [...INITIAL_CUSTOMER_ORDERS];
+    data.customerOrders.unshift(newOrder);
+
+    // 1. Automatically create associated InstallationProject in operations
+    const newProject: InstallationProject = {
+      id: prjId,
+      projectId: prjId,
+      quotationId: quoId,
+      quotationNumber: quoId,
+      customerId: payload.customerId,
+      customerName: payload.customerName,
+      customerPhone: payload.contactNumber,
+      customerAddress: payload.installationAddress,
+      capacityKw: payload.capacityKw,
+      systemType: payload.systemType,
+      technicianId: 'TECH-001',
+      technicianName: 'Rajesh & Team',
+      surveyDate: dateStr,
+      stage: 'Survey Pending',
+      progressPercent: 15,
+      installedProducts: [
+        {
+          id: `IP-${Date.now()}-1`,
+          productCategory: 'Solar Panels',
+          productName: `${Math.ceil((payload.capacityKw * 1000) / 545)}x 545W Mono PERC Panels`,
+          model: 'Waaree Bifacial 545W',
+          serialNumbers: [],
+          deliveryDate: dateStr,
+          warrantyYears: 20
+        },
+        {
+          id: `IP-${Date.now()}-2`,
+          productCategory: 'Inverters',
+          productName: `Growatt ${payload.capacityKw}kW ${payload.systemType} Inverter`,
+          model: 'Growatt SPH Series',
+          serialNumbers: [],
+          deliveryDate: dateStr,
+          warrantyYears: 5
+        }
+      ],
+      photos: [],
+      customerApproved: false,
+      createdAt: now
+    };
+    data.projects.unshift(newProject);
+
+    // 2. Automatically create associated Quotation in Sales & Ops
+    const taxAmt = Math.round(payload.grossCost * 0.138);
+    const newQuotation: Quotation = {
+      id: quoId,
+      quotationNumber: quoId,
+      customerId: payload.customerId,
+      customerName: payload.customerName,
+      customerPhone: payload.contactNumber,
+      customerAddress: payload.installationAddress,
+      systemType: payload.systemType,
+      capacityKw: payload.capacityKw,
+      subtotal: payload.grossCost,
+      taxRatePercent: 13.8,
+      taxAmount: taxAmt,
+      grandTotal: payload.grossCost + taxAmt,
+      status: 'Approved',
+      items: [
+        {
+          id: `QI-${Date.now()}-1`,
+          name: `Waaree 545W Mono PERC Half-Cut Array (${Math.ceil((payload.capacityKw * 1000) / 545)} Panels)`,
+          category: 'Solar Panels',
+          quantity: Math.ceil((payload.capacityKw * 1000) / 545),
+          unit: 'Pieces',
+          unitPrice: 12800,
+          total: Math.ceil((payload.capacityKw * 1000) / 545) * 12800
+        },
+        {
+          id: `QI-${Date.now()}-2`,
+          name: `Growatt ${payload.capacityKw}kW ${payload.systemType} Inverter with Smart BMS`,
+          category: 'Inverters',
+          quantity: 1,
+          unit: 'Unit',
+          unitPrice: payload.systemType === 'On-grid' ? 48500 : 88000,
+          total: payload.systemType === 'On-grid' ? 48500 : 88000
+        }
+      ],
+      createdAt: now,
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      notes: payload.notes || 'Contracted turnkey solar installation with PM Surya Ghar subsidy pre-clearance.'
+    };
+    data.quotations.unshift(newQuotation);
+
+    // 3. Operational priority task for Lead Field Technician / Ops
+    data.tasks.unshift({
+      id: `TASK-${Date.now()}`,
+      title: `Schedule Feasibility Survey for ${payload.customerName}`,
+      category: 'Installation',
+      dueDate: dateStr,
+      priority: 'Urgent',
+      actionType: 'inspect',
+      targetId: prjId,
+      completed: false,
+      targetDescription: `${payload.capacityKw} kW ${payload.systemType} at ${payload.installationAddress}`
+    });
+
+    // 4. Log in activity timeline
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'project',
+      title: `New Solar Order: ${payload.customerName}`,
+      description: `Booked ${payload.capacityKw} kW ${payload.systemType} (Net: ₹${payload.netPayable.toLocaleString('en-IN')})`,
+      timestamp: 'Just now',
+      actor: `${payload.customerName} (Online Portal)`
+    });
+
+    // 5. High-priority system notification for Operations & Admin
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `New Order Placed: ${payload.customerName}`,
+      message: `${payload.capacityKw} kW ${payload.systemType} order placed. Net amount: ₹${payload.netPayable.toLocaleString('en-IN')}. Site survey pending.`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return newOrder;
+  }
+
+  public static updateCustomerOrderStatus(orderId: string, status: CustomerOrderStatus): boolean {
+    const data = this.load();
+    if (!data.customerOrders) data.customerOrders = [...INITIAL_CUSTOMER_ORDERS];
+    const order = data.customerOrders.find(o => o.id === orderId);
+    if (!order) return false;
+
+    const progressMap: Record<CustomerOrderStatus, number> = {
+      'Order Placed': 15,
+      'Site Survey Scheduled': 35,
+      'Hardware Allocated': 55,
+      'Installation In Progress': 80,
+      'Commissioned': 100
+    };
+
+    order.status = status;
+    order.progressPercent = progressMap[status];
+
+    this.save(data);
+    return true;
+  }
+
+  // ==========================================================================
+  // HELPDESK & CUSTOMER SUPPORT INBOX
+  // ==========================================================================
+
+  public static getHelpdeskTickets(customerId?: string): HelpdeskTicket[] {
+    const data = this.load();
+    const tickets = data.helpdeskTickets || INITIAL_HELPDESK_TICKETS;
+    if (customerId) {
+      return tickets.filter(t => t.customerId === customerId);
+    }
+    return tickets;
+  }
+
+  public static createHelpdeskTicket(ticket: {
+    customerId: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    customerAddress: string;
+    orderId?: string;
+    subject: string;
+    category: 'Installation' | 'Subsidy' | 'Hardware Fault' | 'Technician' | 'General';
+    priority?: 'Urgent' | 'High' | 'Normal';
+    initialMessage: string;
+  }): HelpdeskTicket {
+    const data = this.load();
+    if (!data.helpdeskTickets) data.helpdeskTickets = [...INITIAL_HELPDESK_TICKETS];
+
+    const ticketId = `TKT-2026-0${Math.floor(100 + Math.random() * 900)}`;
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const fullDate = new Date().toISOString();
+
+    const newTicket: HelpdeskTicket = {
+      id: ticketId,
+      customerId: ticket.customerId,
+      customerName: ticket.customerName,
+      customerEmail: ticket.customerEmail,
+      customerPhone: ticket.customerPhone,
+      customerAddress: ticket.customerAddress,
+      orderId: ticket.orderId,
+      subject: ticket.subject,
+      category: ticket.category,
+      status: 'Open',
+      priority: ticket.priority || 'Normal',
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          sender: 'customer',
+          senderName: ticket.customerName,
+          text: ticket.initialMessage,
+          timestamp: nowTime
+        }
+      ],
+      createdAt: fullDate,
+      updatedAt: fullDate
+    };
+
+    data.helpdeskTickets.unshift(newTicket);
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `New Support Query: ${ticket.customerName}`,
+      message: `${ticket.subject} (Ticket #${ticketId})`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'tickets'
+    });
+
+    this.save(data);
+    return newTicket;
+  }
+
+  public static sendHelpdeskMessage(ticketId: string, message: {
+    sender: 'customer' | 'agent' | 'bot';
+    senderName: string;
+    text: string;
+  }): boolean {
+    const data = this.load();
+    if (!data.helpdeskTickets) data.helpdeskTickets = [...INITIAL_HELPDESK_TICKETS];
+    const ticket = data.helpdeskTickets.find(t => t.id === ticketId);
+    if (!ticket) return false;
+
+    ticket.messages.push({
+      id: `msg-${Date.now()}`,
+      sender: message.sender,
+      senderName: message.senderName,
+      text: message.text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+    ticket.updatedAt = new Date().toISOString();
+    if (message.sender === 'agent' && ticket.status === 'Open') {
+      ticket.status = 'In Progress';
+    }
+
+    this.save(data);
+    return true;
+  }
+
+  public static updateHelpdeskTicketStatus(ticketId: string, status: 'Open' | 'In Progress' | 'Resolved'): boolean {
+    const data = this.load();
+    if (!data.helpdeskTickets) data.helpdeskTickets = [...INITIAL_HELPDESK_TICKETS];
+    const ticket = data.helpdeskTickets.find(t => t.id === ticketId);
+    if (!ticket) return false;
+
+    ticket.status = status;
+    ticket.updatedAt = new Date().toISOString();
+    this.save(data);
+    return true;
   }
 }

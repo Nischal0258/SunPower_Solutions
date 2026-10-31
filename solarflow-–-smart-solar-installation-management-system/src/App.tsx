@@ -9,6 +9,7 @@ import { SiteSurveyModal } from './components/common/SiteSurveyModal';
 import { ProfileSettingsModal } from './components/common/ProfileSettingsModal';
 import { DataService } from './services/dataService';
 import { UserRole, USER_ROLES } from './types/roles';
+import { DEMO_CUSTOMERS } from './types';
 
 // Module Pages
 import { DashboardPage } from './pages/DashboardPage';
@@ -93,6 +94,18 @@ function AppContent() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [notifications, setNotifications] = useState(DataService.getNotifications());
 
+  useEffect(() => {
+    const handleGlobalUpdate = () => {
+      refreshNotifications();
+    };
+    window.addEventListener('sunpower_data_updated', handleGlobalUpdate);
+    window.addEventListener('storage', handleGlobalUpdate);
+    return () => {
+      window.removeEventListener('sunpower_data_updated', handleGlobalUpdate);
+      window.removeEventListener('storage', handleGlobalUpdate);
+    };
+  }, []);
+
   const handleToggleSidebar = () => {
     setIsSidebarCollapsed(prev => {
       const next = !prev;
@@ -126,12 +139,22 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogin = (role: UserRole = 'manager') => {
+  const handleLogin = (role: UserRole = 'manager', userEmail?: string) => {
     const rInfo = USER_ROLES[role] || USER_ROLES.manager;
+    let userName = rInfo.name;
+    let emailToUse = userEmail || `${role}@gmail.com`;
+
+    if (role === 'customer') {
+      const activePersonaId = localStorage.getItem('sunpower_active_customer_persona') || 'CUST-001';
+      const persona = DEMO_CUSTOMERS.find(c => c.id === activePersonaId) || DEMO_CUSTOMERS[0];
+      userName = persona.name;
+      emailToUse = persona.email;
+    }
+
     const newSession: AuthSession = {
       role,
-      name: rInfo.name,
-      email: `${role}@gmail.com`,
+      name: userName,
+      email: emailToUse,
       title: rInfo.title,
       badge: rInfo.badge,
       avatarColor: rInfo.avatarColor
@@ -147,7 +170,7 @@ function AppContent() {
       console.warn('Failed to persist session:', e);
     }
 
-    showToast(`Signed in successfully as ${rInfo.name} (${rInfo.title}).`, 'success');
+    showToast(`Signed in successfully as ${userName} (${rInfo.title}).`, 'success');
   };
 
   const handleLogout = () => {
@@ -229,6 +252,8 @@ function AppContent() {
               onOpenNewQuotation={() => handleNavigate('quotations')}
               onOpenNewInventory={() => handleNavigate('inventory')}
               onOpenNewTicket={() => handleNavigate('tickets')}
+              userName={session.name}
+              currentRole={currentRole}
             />
           )}
 

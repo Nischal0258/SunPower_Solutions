@@ -12,6 +12,7 @@ import {
   KeyRound
 } from 'lucide-react';
 import { UserRole, USER_ROLES } from '../../types/roles';
+import { DEMO_CUSTOMERS } from '../../types';
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
@@ -68,15 +69,6 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       reportingTo: 'Dr. Singhania (Operations Manager)',
       permissionScope: ['Lead Ledger Intake', 'Solar Sizing Calculator', 'Quotation Creation', 'Feasibility Review']
     },
-    surveyor: {
-      phone: '+91 98450 33112',
-      location: 'Field Operations - West Zone (Pune/Pimpri)',
-      department: 'Technical Feasibility & Rooftop Engineering',
-      employeeId: 'EMP-SP-078',
-      joinDate: '05 July 2024',
-      reportingTo: 'Operations Lead',
-      permissionScope: ['Rooftop Compass Azimuth & Tilt', 'Shading & Obstacle Analysis', 'Earthing Resistance Metering', 'Feasibility Data Capture']
-    },
     warehouse: {
       phone: '+91 98901 44220',
       location: 'SunPower Central Logistics Depot, Pune',
@@ -84,7 +76,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       employeeId: 'EMP-SP-055',
       joinDate: '18 November 2023',
       reportingTo: 'Supply Chain Director',
-      permissionScope: ['Hardware BOM Staging', 'Manual Serial Registration', 'Truck Dispatch Authorization', '2-Year Warranty Clock Activation']
+      permissionScope: ['Inventory Stock Tracking', 'Inventory Replenishment', 'Manual Serial Registration', 'Warehouse Order Staging & Stock Level Reporting']
     },
     technician: {
       phone: '+91 98600 55891',
@@ -93,7 +85,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       employeeId: 'EMP-SP-104',
       joinDate: '12 February 2024',
       reportingTo: 'Field Operations Lead',
-      permissionScope: ['Rooftop PV Rail Mounting', 'Inverter AC/DC Wiring', 'Photo QA Evidence Upload', 'Digital Customer Handover']
+      permissionScope: ['On-site Technical Feasibility Surveys', 'Rooftop PV Rail Mounting & Commissioning', 'Photo QA Evidence Upload & Audit', 'Service Ticket Creation & Warranty Management']
     },
     support: {
       phone: '+91 98210 66743',
@@ -116,7 +108,23 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   };
 
   const details = profileDetails[currentRole] || profileDetails.manager;
-  const emailDisplay = userEmail || `${currentRole}@gmail.com`;
+  let displayName = roleInfo.name;
+  let displayEmail = userEmail || `${currentRole}@gmail.com`;
+  let displayPhone = details.phone;
+  let displayLocation = details.location;
+  let displayId = details.employeeId;
+
+  if (isCustomer) {
+    try {
+      const activePersonaId = localStorage.getItem('sunpower_active_customer_persona') || 'CUST-001';
+      const persona = DEMO_CUSTOMERS.find(c => c.id === activePersonaId) || DEMO_CUSTOMERS[0];
+      displayName = persona.name;
+      displayEmail = persona.email;
+      displayPhone = persona.phone;
+      displayLocation = `${persona.address}, ${persona.city}`;
+      displayId = persona.id;
+    } catch {}
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
@@ -125,11 +133,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
         <div className="bg-[#292724] text-white p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-11 h-11 rounded-xl ${roleInfo.avatarColor} text-white font-bold text-base flex items-center justify-center shadow-md ring-2 ring-white/10`}>
-              {roleInfo.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              {displayName.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white tracking-tight">{roleInfo.name}</h3>
+                <h3 className="text-base font-bold text-white tracking-tight">{displayName}</h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/20 text-[#DBBA95] uppercase tracking-wider">
                   {roleInfo.badge}
                 </span>
@@ -156,7 +164,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 <Mail className="w-3.5 h-3.5 text-[#C66B45]" />
                 {isCustomer ? 'Contact Email' : 'Corporate Email'}
               </span>
-              <p className="font-semibold text-xs text-[#292724] truncate">{emailDisplay}</p>
+              <p className="font-semibold text-xs text-[#292724] truncate">{displayEmail}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#F5F3EF]/60 border border-[#E7E2D9]">
@@ -164,7 +172,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 <Phone className="w-3.5 h-3.5 text-[#C66B45]" />
                 Verified Phone Number
               </span>
-              <p className="font-semibold text-xs text-[#292724]">{details.phone}</p>
+              <p className="font-semibold text-xs text-[#292724]">{displayPhone}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#F5F3EF]/60 border border-[#E7E2D9]">
@@ -172,7 +180,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 <BadgeCheck className="w-3.5 h-3.5 text-[#C66B45]" />
                 {isCustomer ? 'Customer Account ID' : 'Employee ID'}
               </span>
-              <p className="font-mono font-bold text-xs text-[#292724]">{details.employeeId}</p>
+              <p className="font-mono font-bold text-xs text-[#292724]">{displayId}</p>
             </div>
 
             <div className="p-3 rounded-xl bg-[#F5F3EF]/60 border border-[#E7E2D9]">
@@ -198,7 +206,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               <MapPin className="w-4 h-4 text-[#C66B45] shrink-0 mt-0.5" />
               <div>
                 <span className="text-[10px] text-slate-500 font-medium block">{isCustomer ? 'Installation Site Address' : 'Assigned Operating Branch'}</span>
-                <p className="font-semibold text-xs text-[#292724]">{details.location}</p>
+                <p className="font-semibold text-xs text-[#292724]">{displayLocation}</p>
               </div>
             </div>
           </div>

@@ -24,6 +24,7 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { useToast } from '../components/common/Toast';
 import { NavTab } from '../components/layout/Sidebar';
+import { UserRole } from '../types/roles';
 import { SiteSurveyModal, SiteSurveyData } from '../components/common/SiteSurveyModal';
 import { SerialNumberScanModal } from '../components/common/SerialNumberScanModal';
 

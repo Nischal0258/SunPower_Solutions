@@ -15,7 +15,7 @@ import {
   PhoneCall,
   Check
 } from 'lucide-react';
-import { NavTab } from '../components/layout/Sidebar';
+import { NavTab, UserRole } from '../types/roles';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { DataService } from '../services/dataService';
 import { BusinessTask, InstallationProject, Quotation, ServiceTicket, InventoryItem } from '../types';
@@ -27,6 +27,8 @@ interface DashboardPageProps {
   onOpenNewQuotation: () => void;
   onOpenNewInventory: () => void;
   onOpenNewTicket: () => void;
+  userName?: string;
+  currentRole?: UserRole;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
@@ -35,14 +37,44 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onOpenNewCustomer,
   onOpenNewQuotation,
   onOpenNewInventory,
-  onOpenNewTicket
+  onOpenNewTicket,
+  userName,
+  currentRole
 }) => {
   const [tasks, setTasks] = React.useState<BusinessTask[]>(DataService.getTasks());
-  const projects = DataService.getProjects();
-  const quotations = DataService.getQuotations();
-  const inventory = DataService.getInventory();
-  const tickets = DataService.getServiceTickets();
-  const activities = DataService.getActivities();
+  const [projects, setProjects] = React.useState<InstallationProject[]>(DataService.getProjects());
+  const [quotations, setQuotations] = React.useState<Quotation[]>(DataService.getQuotations());
+  const [inventory, setInventory] = React.useState<InventoryItem[]>(DataService.getInventory());
+  const [tickets, setTickets] = React.useState<ServiceTicket[]>(DataService.getServiceTickets());
+  const [activities, setActivities] = React.useState(DataService.getActivities());
+
+  const refreshDashboard = React.useCallback(() => {
+    setTasks(DataService.getTasks());
+    setProjects(DataService.getProjects());
+    setQuotations(DataService.getQuotations());
+    setInventory(DataService.getInventory());
+    setTickets(DataService.getServiceTickets());
+    setActivities(DataService.getActivities());
+  }, []);
+
+  React.useEffect(() => {
+    refreshDashboard();
+    window.addEventListener('sunpower_data_updated', refreshDashboard);
+    window.addEventListener('storage', refreshDashboard);
+    return () => {
+      window.removeEventListener('sunpower_data_updated', refreshDashboard);
+      window.removeEventListener('storage', refreshDashboard);
+    };
+  }, [refreshDashboard]);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const displayName = userName || 'Dr. Singhania';
 
   // Metrics
   const activeProjectsCount = projects.filter(p => p.stage !== 'Completed').length;
@@ -87,7 +119,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#D9A441]" />
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-              Good morning, Sunil
+              {getGreeting()}, {displayName}
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">

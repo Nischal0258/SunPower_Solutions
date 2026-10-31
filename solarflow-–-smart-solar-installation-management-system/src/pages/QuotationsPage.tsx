@@ -23,6 +23,7 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { useToast } from '../components/common/Toast';
 import { NavTab } from '../components/layout/Sidebar';
+import { UserRole } from '../types/roles';
 
 interface QuotationsPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;

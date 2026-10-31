@@ -3,7 +3,7 @@ import { Sun, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, AlertCircle } fr
 import { UserRole, USER_ROLES } from '../../types/roles';
 
 interface SignInPageProps {
-  onLogin: (role: UserRole) => void;
+  onLogin: (role: UserRole, userEmail?: string) => void;
 }
 
 export const SignInPage: React.FC<SignInPageProps> = ({ onLogin }) => {
@@ -19,11 +19,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onLogin }) => {
     'manager@gmail.com': 'manager',
     'director@gmail.com': 'director',
     'sales@gmail.com': 'sales',
-    'surveyor@gmail.com': 'surveyor',
     'warehouse@gmail.com': 'warehouse',
     'technician@gmail.com': 'technician',
     'support@gmail.com': 'support',
-    'customer@gmail.com': 'customer'
+    'customer@gmail.com': 'customer',
+    'ananya@gmail.com': 'customer',
+    'suresh@gmail.com': 'customer'
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,11 +41,19 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onLogin }) => {
     const matchedRole = roleCredentials[cleanEmail];
 
     if (!matchedRole) {
-      setErrorMessage(`Unrecognized email. Please use a standardized role email (e.g., manager@gmail.com, sales@gmail.com, etc.).`);
+      setErrorMessage(`Unrecognized email. Please use a standardized role email (e.g., manager@gmail.com, sales@gmail.com, customer@gmail.com).`);
       return;
     }
 
-    onLogin(matchedRole);
+    if (cleanEmail === 'ananya@gmail.com') {
+      try { localStorage.setItem('sunpower_active_customer_persona', 'CUST-002'); } catch {}
+    } else if (cleanEmail === 'suresh@gmail.com') {
+      try { localStorage.setItem('sunpower_active_customer_persona', 'CUST-003'); } catch {}
+    } else if (cleanEmail === 'customer@gmail.com') {
+      try { localStorage.setItem('sunpower_active_customer_persona', 'CUST-001'); } catch {}
+    }
+
+    onLogin(matchedRole, cleanEmail);
   };
 
   const handleForgotPassword = (e: React.MouseEvent) => {

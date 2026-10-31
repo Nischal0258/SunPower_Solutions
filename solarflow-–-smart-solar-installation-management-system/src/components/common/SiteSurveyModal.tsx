@@ -35,7 +35,7 @@ export const SiteSurveyModal: React.FC<SiteSurveyModalProps> = ({
   const [cableDistanceMeters, setCableDistanceMeters] = useState(existingSurvey?.cableDistanceMeters ?? 28);
   const [shadowObstruction, setShadowObstruction] = useState(existingSurvey?.shadowObstruction ?? 'None (Full Sun)');
   const [earthingResistanceOhms, setEarthingResistanceOhms] = useState(existingSurvey?.earthingResistanceOhms ?? 3.8);
-  const [surveyorName, setSurveyorName] = useState(existingSurvey?.surveyorName ?? 'Manoj Kumar (Certified MNRE Surveyor)');
+  const [surveyorName, setSurveyorName] = useState(existingSurvey?.surveyorName ?? 'Rajesh Kumar (Lead Field Technician & Surveyor)');
   const [approved, setApproved] = useState(existingSurvey?.approved ?? true);
   const [notes, setNotes] = useState(
     existingSurvey?.notes ?? 'Optimal south-facing reinforced RCC roof. Zero shading. Earthing rod location verified.'
@@ -189,7 +189,7 @@ export const SiteSurveyModal: React.FC<SiteSurveyModalProps> = ({
         {/* Surveyor Name & Notes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-slate-900 block mb-1">Certified Surveyor Name</label>
+            <label className="text-xs font-semibold text-slate-900 block mb-1">Lead Field Technician / Surveyor Name</label>
             <input
               type="text"
               value={surveyorName}
@@ -198,7 +198,7 @@ export const SiteSurveyModal: React.FC<SiteSurveyModalProps> = ({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-900 block mb-1">Surveyor Observations</label>
+            <label className="text-xs font-semibold text-slate-900 block mb-1">Technician Field Assessment Notes</label>
             <input
               type="text"
               value={notes}

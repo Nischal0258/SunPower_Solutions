@@ -94,17 +94,18 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
 
     // Register warranties in DataService
     serials.forEach(s => {
-      DataService.addWarranty({
+      DataService.registerWarranty({
         customerId: activeProject.customerId,
+        customerName: activeProject.customerName,
+        customerPhone: activeProject.customerPhone,
+        customerAddress: activeProject.customerAddress,
+        projectId: activeProject.id,
         serialNumber: s,
-        productCategory: s.includes('BAT') ? 'Battery' : 'Inverter',
-        brand: 'Growatt / Pylontech',
-        model: 'Solar Equipment Unit',
-        warrantyYears: 2,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: 'Active',
-        supportContact: '+91 20 2553 4400'
+        productCategory: s.includes('BAT') ? 'Batteries' : 'Inverters',
+        productName: s.includes('BAT') ? 'Pylontech LiFePO4 Battery' : 'Growatt Inverter Unit',
+        model: s.includes('BAT') ? 'US5000' : 'SPF-5000-ES',
+        deliveryDate: new Date().toISOString().split('T')[0],
+        warrantyYears: 2
       });
     });
 
@@ -178,7 +179,7 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
                     <div>
                       <span className="font-mono font-bold text-xs text-[#292724]">{proj.id}</span>
                       <h4 className="font-semibold text-xs text-slate-800 mt-0.5">{proj.customerName}</h4>
-                      <p className="text-[11px] text-slate-500">{proj.systemCapacityKw} kW Turnkey System</p>
+                      <p className="text-[11px] text-slate-500">{proj.capacityKw} kW Turnkey System</p>
                     </div>
 
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -203,7 +204,7 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
             <div>
               <span className="font-mono font-bold text-xs text-[#C66B45]">{activeProject.id}</span>
               <h3 className="font-bold text-base text-[#292724] mt-0.5">{activeProject.customerName}</h3>
-              <p className="text-[11px] text-slate-500">Destination: {activeProject.address || 'Pune Site'}, Maharashtra</p>
+              <p className="text-[11px] text-slate-500">Destination: {activeProject.customerAddress || 'Pune Site'}, Maharashtra</p>
             </div>
 
             {dispatchStatus[activeProject.id]?.dispatched ? (

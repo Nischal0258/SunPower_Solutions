@@ -232,3 +232,127 @@ export interface SystemNotification {
   read: boolean;
   linkTab?: string;
 }
+
+
+// ============================================================================
+// CUSTOMER ORDERS, DEMO PERSONAS & REAL-TIME HELPDESK TYPES
+// ============================================================================
+
+export type CustomerOrderStatus = 
+  | 'Order Placed' 
+  | 'Site Survey Scheduled' 
+  | 'Hardware Allocated' 
+  | 'Installation In Progress' 
+  | 'Commissioned';
+
+export interface CustomerOrder {
+  id: string; // e.g. "ORD-2026-088"
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  contactNumber: string;
+  installationAddress: string;
+  city: string;
+  state: string;
+  systemType: SystemType;
+  capacityKw: number;
+  grossCost: number;
+  centralSubsidy: number;
+  stateSubsidy: number;
+  netPayable: number;
+  status: CustomerOrderStatus;
+  progressPercent: number;
+  projectId?: string;
+  quotationId?: string;
+  assignedTechnicianName?: string;
+  assignedTechnicianPhone?: string;
+  selectedAddons?: string[];
+  documentUrl?: string;
+  timestamp: string;
+  notes?: string;
+}
+
+export interface HelpdeskMessage {
+  id: string;
+  sender: 'customer' | 'agent' | 'bot';
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface HelpdeskTicket {
+  id: string; // e.g. "TKT-2026-104"
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerAddress: string;
+  orderId?: string;
+  subject: string;
+  category: 'Installation' | 'Subsidy' | 'Hardware Fault' | 'Technician' | 'General';
+  status: 'Open' | 'In Progress' | 'Resolved';
+  priority: 'Urgent' | 'High' | 'Normal';
+  messages: HelpdeskMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerPersona {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  roofAreaSqFt: number;
+  sanctionLoadKw: number;
+  installedSystem?: string;
+  avatarInitials: string;
+}
+
+export const DEMO_CUSTOMERS: CustomerPersona[] = [
+  {
+    id: 'CUST-001',
+    name: 'Rajendra Joshi',
+    email: 'customer@gmail.com',
+    phone: '+91 98201 54321',
+    address: 'Plot 42, Baner Hills, Pashan Highway',
+    city: 'Pune',
+    state: 'Maharashtra',
+    pincode: '411045',
+    roofAreaSqFt: 1400,
+    sanctionLoadKw: 10,
+    installedSystem: '10 kW Hybrid Solar System',
+    avatarInitials: 'RJ'
+  },
+  {
+    id: 'CUST-002',
+    name: 'Ananya Deshpande',
+    email: 'ananya@gmail.com',
+    phone: '+91 98112 33456',
+    address: 'Villa 18, Greenwood Estates, Whitefield',
+    city: 'Bengaluru',
+    state: 'Karnataka',
+    pincode: '560066',
+    roofAreaSqFt: 950,
+    sanctionLoadKw: 6,
+    installedSystem: '5 kW On-Grid Solar System',
+    avatarInitials: 'AD'
+  },
+  {
+    id: 'CUST-003',
+    name: 'Suresh Singhania',
+    email: 'suresh@gmail.com',
+    phone: '+91 98223 77889',
+    address: '402, Heritage Residency, Model Colony, Shivaji Nagar',
+    city: 'Pune',
+    state: 'Maharashtra',
+    pincode: '411016',
+    roofAreaSqFt: 1800,
+    sanctionLoadKw: 15,
+    installedSystem: '15 kW On-Grid Commercial Array',
+    avatarInitials: 'SS'
+  }
+];

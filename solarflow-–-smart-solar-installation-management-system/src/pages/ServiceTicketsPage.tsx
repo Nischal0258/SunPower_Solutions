@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LifeBuoy,
   Search,
@@ -20,6 +20,7 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { useToast } from '../components/common/Toast';
 import { NavTab } from '../components/layout/Sidebar';
+import { HelpdeskInboxView } from '../components/support/HelpdeskInboxView';
 
 interface ServiceTicketsPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
@@ -38,6 +39,18 @@ export const ServiceTicketsPage: React.FC<ServiceTicketsPageProps> = ({
   const [searchQuery, setSearchQuery] = useState(initialTicketIdOrSerial || '');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [priorityFilter, setPriorityFilter] = useState<string>('All');
+  const [activeView, setActiveView] = useState<'rma' | 'helpdesk'>('rma');
+
+  useEffect(() => {
+    refreshList();
+    const handleUpdate = () => refreshList();
+    window.addEventListener('sunpower_data_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('sunpower_data_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
 
   // Selected Ticket for detail & resolution
   const [activeTicket, setActiveTicket] = useState<ServiceTicket | null>(() => {
@@ -156,7 +169,50 @@ export const ServiceTicketsPage: React.FC<ServiceTicketsPageProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Top Filter & Action Bar */}
+      {/* View Switcher: Field Service vs Customer Helpdesk */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveView('rma')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs transition-colors ${
+              activeView === 'rma'
+                ? 'bg-[#292724] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-[#C66B45]" />
+            Field Service & RMA Tickets
+            <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] bg-slate-700 text-white">
+              {tickets.length}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('helpdesk')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs transition-colors ${
+              activeView === 'helpdesk'
+                ? 'bg-[#292724] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <LifeBuoy className="w-4 h-4 text-[#C66B45]" />
+            Live Customer Helpdesk & Chat Inbox
+            <span className="ml-1.5 px-2 py-0.5 rounded-full text-[10px] bg-[#C66B45] text-white">
+              {DataService.getHelpdeskTickets().filter(t => t.status !== 'Resolved').length} Active
+            </span>
+          </button>
+        </div>
+        <div className="text-[11px] text-slate-500 font-medium">
+          {activeView === 'rma' ? 'Field diagnostics & technician dispatches' : 'Real-time two-way customer communication channel'}
+        </div>
+      </div>
+
+      {activeView === 'helpdesk' ? (
+        <HelpdeskInboxView />
+      ) : (
+        <>
+          {/* Top Filter & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center gap-2 flex-1 max-w-2xl">
           <div className="relative flex-1 min-w-[200px]">
@@ -540,6 +596,8 @@ export const ServiceTicketsPage: React.FC<ServiceTicketsPageProps> = ({
             )}
           </div>
         </Modal>
+      )}
+        </>
       )}
     </div>
   );

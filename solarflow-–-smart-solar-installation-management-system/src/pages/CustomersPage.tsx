@@ -14,8 +14,7 @@ import {
   Trash2,
   ExternalLink,
   Calendar,
-  AlertCircle,
-  ClipboardCheck
+  AlertCircle
 } from 'lucide-react';
 import { DataService } from '../services/dataService';
 import { Customer, LeadStatus, Quotation, InstallationProject, ServiceTicket } from '../types';
@@ -258,17 +257,6 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {onOpenSiteSurvey && (
-            <button
-              onClick={onOpenSiteSurvey}
-              className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-slate-100 text-slate-900 text-xs font-semibold hover:bg-slate-100 transition-all shadow-xs shrink-0"
-              title="Launch technical rooftop feasibility survey form"
-            >
-              <ClipboardCheck className="w-4 h-4 text-[#C66B45]" />
-              <span>Conduct Site Survey</span>
-            </button>
-          )}
-
           <button
             onClick={handleOpenAdd}
             className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm shrink-0"
