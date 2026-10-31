@@ -59,6 +59,7 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
   const [systemType, setSystemType] = useState<SystemType>('Hybrid');
   const [capacityKw, setCapacityKw] = useState<number>(5);
   const [taxRatePercent, setTaxRatePercent] = useState<number>(13.8); // Solar composite GST
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [validDays, setValidDays] = useState<number>(30);
   const [quotationNotes, setQuotationNotes] = useState('');
   const [bomItems, setBomItems] = useState<QuotationItem[]>([]);
@@ -201,6 +202,7 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
     setSystemType(q.systemType);
     setCapacityKw(q.capacityKw);
     setTaxRatePercent(q.taxRatePercent || 13.8);
+    setDiscountPercent(q.discountPercent || 0);
     setQuotationNotes(q.notes || '');
     setBomItems([...q.items]);
     setIsBuilderOpen(true);
@@ -236,10 +238,13 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
     setBomItems(bomItems.filter((_, idx) => idx !== index));
   };
 
-  // Calculations
+  // Calculations & Policy Bounds
   const subtotal = bomItems.reduce((acc, item) => acc + item.total, 0);
-  const taxAmount = Math.round((subtotal * taxRatePercent) / 100);
-  const grandTotal = subtotal + taxAmount;
+  const discountAmount = Math.round((subtotal * (discountPercent || 0)) / 100);
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+  const taxAmount = Math.round((discountedSubtotal * taxRatePercent) / 100);
+  const grandTotal = discountedSubtotal + taxAmount;
+  const requiresManagerApproval = discountPercent > 10;
 
   const handleSaveQuotation = (status: QuotationStatus = 'Sent') => {
     const customer = customers.find(c => c.id === selectedCustomerId);
@@ -325,7 +330,7 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
           </div>
 
           <div className="flex items-center gap-1">
-            {['All', 'Draft', 'Sent', 'Approved', 'Rejected'].map(st => (
+            {['All', 'Pending Manager Approval', 'Draft', 'Sent', 'Approved', 'Rejected'].map(st => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
@@ -625,15 +630,49 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
               />
             </div>
 
-            <div className="w-full sm:w-64 space-y-1.5 text-xs">
+            <div className="w-full sm:w-72 space-y-2 text-xs">
               <div className="flex justify-between text-slate-600">
-                <span>Subtotal (Net):</span>
+                <span>Subtotal (Net BOM):</span>
                 <span className="font-mono font-medium">₹{subtotal.toLocaleString('en-IN')}</span>
               </div>
+
+              {/* Commercial Discount Input */}
+              <div className="flex items-center justify-between text-slate-700 bg-white p-2 rounded-lg border border-slate-200">
+                <div>
+                  <span className="font-semibold block text-[11px]">Special Discount:</span>
+                  {requiresManagerApproval && (
+                    <span className="text-[9px] font-bold text-amber-700">
+                      ⚠️ &gt;10% Req. Manager Sign-off
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 font-mono">
+                  <input
+                    type="number"
+                    min={0}
+                    max={50}
+                    step={1}
+                    value={discountPercent || ''}
+                    onChange={(e) => setDiscountPercent(Math.max(0, Math.min(50, Number(e.target.value) || 0)))}
+                    placeholder="0"
+                    className="w-14 p-1 text-right rounded border border-slate-300 font-bold text-xs"
+                  />
+                  <span>%</span>
+                </div>
+              </div>
+
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-rose-600 font-medium text-[11px]">
+                  <span>Discount Applied:</span>
+                  <span className="font-mono">-₹{discountAmount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-slate-600">
                 <span>GST ({taxRatePercent}%):</span>
                 <span className="font-mono font-medium">₹{taxAmount.toLocaleString('en-IN')}</span>
               </div>
+
               <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-bold text-slate-900">
                 <span>Grand Total:</span>
                 <span className="font-mono text-base text-[#C66B45]">₹{grandTotal.toLocaleString('en-IN')}</span>
@@ -660,9 +699,20 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
             <button
               type="button"
               onClick={() => handleSaveQuotation('Sent')}
-              className="px-5 py-2 rounded-lg bg-[#C66B45] text-white font-semibold hover:bg-[#C66B45]/90 shadow-sm"
+              className={`px-5 py-2 rounded-lg font-semibold shadow-sm transition-all flex items-center gap-1.5 text-white ${
+                requiresManagerApproval
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-[#C66B45] hover:bg-[#C66B45]/90'
+              }`}
             >
-              Save & Send to Customer
+              {requiresManagerApproval ? (
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Submit for Manager Approval (&gt;10% Discount)</span>
+                </>
+              ) : (
+                <span>Save & Send to Customer</span>
+              )}
             </button>
           </div>
         </div>
@@ -861,7 +911,7 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
                   <div className="h-12 flex items-end">
                     <span className="font-serif italic text-sm text-slate-500">Authorized Signatory</span>
                   </div>
-                  <p className="text-[10px] text-slate-400 border-t border-slate-200 pt-1">Project Technical Director</p>
+                  <p className="text-[10px] text-slate-400 border-t border-slate-200 pt-1">Operations Manager</p>
                 </div>
 
                 <div className="text-right">

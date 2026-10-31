@@ -52,18 +52,18 @@ function AppContent() {
     } catch (e) {
       console.warn('Failed to parse stored session:', e);
     }
-    // Default active session for Managing Director & Operations
+    // Default active session for Operations Manager
     return {
-      role: 'director',
+      role: 'manager',
       name: 'Dr. Singhania',
-      email: 'director@gmail.com',
-      title: 'Managing Director & Operations',
-      badge: 'Executive',
+      email: 'manager@gmail.com',
+      title: 'Operations Manager',
+      badge: 'Manager',
       avatarColor: 'bg-purple-600'
     };
   });
 
-  const currentRole: UserRole = session?.role || 'director';
+  const currentRole: UserRole = session?.role || 'manager';
   const roleInfo = USER_ROLES[currentRole];
 
   // Active navigation tab
@@ -139,8 +139,8 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogin = (role: UserRole = 'director', userEmail?: string) => {
-    const rInfo = USER_ROLES[role] || USER_ROLES.director;
+  const handleLogin = (role: UserRole = 'manager', userEmail?: string) => {
+    const rInfo = USER_ROLES[role] || USER_ROLES.manager;
     let userName = rInfo.name;
     let emailToUse = userEmail || `${role}@gmail.com`;
 

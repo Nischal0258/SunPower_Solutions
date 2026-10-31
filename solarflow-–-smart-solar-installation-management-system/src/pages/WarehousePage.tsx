@@ -118,7 +118,7 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
             </span>
           </div>
           <p className="text-xs text-[#292724]/70 mt-1">
-            Manual serial registration, staging verification, and truck departure authorization strictly gated by Director Feasibility Approval.
+            Manual serial registration, staging verification, and truck departure authorization strictly gated by Manager Feasibility Approval.
           </p>
         </div>
 
@@ -198,7 +198,7 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
                   {isLocked && (
                     <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] text-amber-700 font-medium">
                       <Lock className="w-3 h-3 shrink-0" />
-                      <span>Locked — Awaiting Director Feasibility Approval</span>
+                      <span>Locked — Awaiting Manager Feasibility Approval</span>
                     </div>
                   )}
                 </div>
@@ -232,10 +232,10 @@ export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) =
                 <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 space-y-2">
                   <div className="flex items-center gap-2 font-bold text-xs">
                     <Lock className="w-4 h-4 text-amber-700 shrink-0" />
-                    <span>Locked — Awaiting Director Feasibility Approval</span>
+                    <span>Locked — Awaiting Manager Feasibility Approval</span>
                   </div>
                   <p className="text-[11px] text-amber-800 leading-relaxed">
-                    This order is currently at stage <strong className="font-mono">{activeProject.stage}</strong>. Warehouse staging and equipment serial allocation are strictly locked until the lead technician completes the on-site technical feasibility survey and the Director approves the roof structure and tilt.
+                    This order is currently at stage <strong className="font-mono">{activeProject.stage}</strong>. Warehouse staging and equipment serial allocation are strictly locked until the lead technician completes the on-site technical feasibility survey and the Operations Manager approves the roof structure and tilt.
                   </p>
                 </div>
               )}

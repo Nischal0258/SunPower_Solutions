@@ -269,7 +269,7 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
     { status: 'Order Placed', title: '1. Order Placed', desc: 'Contract registered & advance invoice generated' },
     { status: 'Survey Assigned', title: '2. Survey Assigned', desc: 'Lead field technician assigned to site' },
     { status: 'Survey In Progress', title: '3. Survey In Progress', desc: 'Rooftop azimuth, tilt & earthing tests' },
-    { status: 'Survey Submitted', title: '4. Survey Submitted', desc: 'Feasibility report under Director review' },
+    { status: 'Survey Submitted', title: '4. Survey Submitted', desc: 'Feasibility report under Manager review' },
     { status: 'Feasibility Approved', title: '5. Feasibility Approved', desc: 'Roof approved & warehouse staging unlocked' },
     { status: 'Hardware Dispatched', title: '6. Hardware Dispatched', desc: 'Modules, inverter & battery en route' },
     { status: 'Installation & Handover Completed', title: '7. Handover Done', desc: 'Mounted, live tested & customer signed' },
@@ -1005,7 +1005,7 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                 : 'bg-slate-100 text-slate-800 border-slate-200'
                             }`}>
-                              {order.status === 'Pending Approval' ? 'Pending Director Approval' : order.status}
+                              {order.status === 'Pending Approval' ? 'Pending Manager Approval' : order.status}
                             </span>
                           </div>
                           <h4 className="font-bold text-sm text-[#292724] mt-1">

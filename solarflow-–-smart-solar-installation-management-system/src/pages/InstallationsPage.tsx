@@ -43,7 +43,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   onNavigateTab,
   initialProjectId,
   onOpenSiteSurvey,
-  currentRole = "director"
+  currentRole = "manager"
 }) => {
   // If user role is technician, render the dedicated Field Technician Execution Workspace
   if (currentRole === 'technician') {
@@ -63,14 +63,14 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
     return null;
   });
 
-  // Director Actions State: Assign Technician
+  // Manager Actions State: Assign Technician
   const [assignTechId, setAssignTechId] = useState<string>(TECHNICIANS[0]?.id || '');
   const [assignSurveyDate, setAssignSurveyDate] = useState<string>(
     new Date(Date.now() + 86400000).toISOString().split('T')[0]
   );
   const [assignNotes, setAssignNotes] = useState<string>('Verify RCC roof anchor depth and conduit path to ground floor meter.');
 
-  // Director Actions State: Feasibility Approval / Re-survey
+  // Manager Actions State: Feasibility Approval / Re-survey
   const [directorApprovalNotes, setDirectorApprovalNotes] = useState<string>('Feasibility parameters verified. Rooftop tilt and orientation approved for installation.');
   const [resurveyReason, setResurveyReason] = useState<string>('');
   const [showResurveyInput, setShowResurveyInput] = useState<boolean>(false);
@@ -106,7 +106,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
     'Commissioned & Closed'
   ];
 
-  // 1. Director Action: Assign Technician
+  // 1. Manager Action: Assign Technician
   const handleAssignTechnicianSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeProject) return;
@@ -131,7 +131,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
     }
   };
 
-  // 2. Director Action: Approve Feasibility
+  // 2. Manager Action: Approve Feasibility
   const handleApproveFeasibility = () => {
     if (!activeProject) return;
 
@@ -148,7 +148,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
     }
   };
 
-  // 3. Director Action: Request Re-survey
+  // 3. Manager Action: Request Re-survey
   const handleRequestResurvey = () => {
     if (!activeProject) return;
 
@@ -168,7 +168,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
     }
   };
 
-  // 4. Director Action: Approve Commissioning & Close Project
+  // 4. Manager Action: Approve Commissioning & Close Project
   const handleApproveCommissioning = () => {
     if (!activeProject) return;
 
@@ -342,7 +342,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
       </div>
 
       {/* =======================================================================
-          DIRECTOR PROJECT ORCHESTRATION & APPROVAL MODAL
+          MANAGER PROJECT ORCHESTRATION & APPROVAL MODAL
           ======================================================================= */}
       {activeProject && (
         <Modal
@@ -425,10 +425,10 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
             </div>
 
             {/* ===================================================================
-                STAGE SPECIFIC WORKFLOW CONTROLS (DIRECTOR OVERSIGHT ONLY)
+                STAGE SPECIFIC WORKFLOW CONTROLS (MANAGER OVERSIGHT ONLY)
                 =================================================================== */}
 
-            {/* 1. STAGE: Order Placed -> Director Assigns Technician with explicit Button */}
+            {/* 1. STAGE: Order Placed -> Manager Assigns Technician with explicit Button */}
             {activeProject.stage === 'Order Placed' && (
               <div className="p-5 rounded-xl border border-amber-200 bg-amber-50/50 space-y-4">
                 <div className="flex items-center gap-2">
@@ -479,7 +479,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
 
                   <div>
                     <label className="block font-semibold text-slate-900 mb-1">
-                      Director Survey Instructions / Special Notes:
+                      Manager Survey Instructions / Special Notes:
                     </label>
                     <textarea
                       value={assignNotes}
@@ -521,7 +521,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
               </div>
             )}
 
-            {/* 3. STAGE: Survey Submitted -> Director Reviews Read-Only Report & Approves or Requests Re-survey */}
+            {/* 3. STAGE: Survey Submitted -> Manager Reviews Read-Only Report & Approves or Requests Re-survey */}
             {activeProject.stage === 'Survey Submitted' && (
               <div className="p-5 rounded-xl border border-blue-200 bg-blue-50/40 space-y-5">
                 <div className="flex items-center justify-between">
@@ -536,7 +536,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   </div>
 
                   <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                    Pending Director Approval
+                    Pending Manager Approval
                   </span>
                 </div>
 
@@ -593,11 +593,11 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   </div>
                 </div>
 
-                {/* Director Verification Controls */}
+                {/* Manager Verification Controls */}
                 <div className="space-y-3 pt-2 border-t border-blue-200/60">
                   <div>
                     <label className="block font-semibold text-slate-900 mb-1">
-                      Director Approval Remarks:
+                      Manager Approval Remarks:
                     </label>
                     <input
                       type="text"
@@ -725,7 +725,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
               </div>
             )}
 
-            {/* 6. STAGE: Installation & Handover Completed -> Director Final Commissioning Sign-off */}
+            {/* 6. STAGE: Installation & Handover Completed -> Manager Final Commissioning Sign-off */}
             {activeProject.stage === 'Installation & Handover Completed' && (
               <div className="p-5 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-5">
                 <div className="flex items-center justify-between">
@@ -735,7 +735,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                       <span>Installation Handover Verification & Final Commissioning</span>
                     </h4>
                     <p className="text-[11px] text-slate-600 mt-0.5">
-                      Field technician has submitted live power test and customer digital acceptance. Ready for Director project closure.
+                      Field technician has submitted live power test and customer digital acceptance. Ready for Manager project closure.
                     </p>
                   </div>
                   <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -774,7 +774,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   </div>
                 </div>
 
-                {/* Director Final Sign-off Button */}
+                {/* Manager Final Sign-off Button */}
                 <div className="flex justify-end pt-2 border-t border-emerald-200/60">
                   <button
                     type="button"

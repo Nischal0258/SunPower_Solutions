@@ -1,6 +1,7 @@
 export type SystemType = 'On-grid' | 'Off-grid' | 'Hybrid';
 
 export type LeadStatus = 
+  | 'Hot'
   | 'Lead / Inquiry' 
   | 'Order Placed' 
   | 'Site Survey' 
@@ -12,7 +13,7 @@ export type LeadStatus =
   | 'Converted' 
   | 'Lost';
 
-export type QuotationStatus = 'Draft' | 'Sent' | 'Approved' | 'Rejected';
+export type QuotationStatus = 'Draft' | 'Sent' | 'Approved' | 'Rejected' | 'Pending Manager Approval';
 
 export type ProductCategory = 
   | 'Solar Panels' 
@@ -63,6 +64,7 @@ export interface Customer {
   roofAreaSqFt?: number;
   sanctionLoadKw?: number;
   monthlyBill?: number;
+  propertyType?: 'Residential' | 'Commercial';
   notes?: string;
   createdAt: string;
 }
@@ -93,6 +95,10 @@ export interface Quotation {
   taxRatePercent: number; // e.g. 13.8%
   taxAmount: number;
   grandTotal: number;
+  discountPercent?: number;
+  discountAmount?: number;
+  marginPercent?: number;
+  requiresManagerApproval?: boolean;
   status: QuotationStatus;
   createdAt: string;
   validUntil: string;
@@ -172,6 +178,7 @@ export interface FeasibilityReport {
   verdict?: string;
   notes?: string;
   directorReviewNotes?: string;
+  managerReviewNotes?: string;
 }
 
 export interface HardwareDispatchRecord {
@@ -201,6 +208,7 @@ export interface CommissioningData {
   notes?: string;
   handoverNotes?: string;
   approvedByDirector?: boolean;
+  approvedByManager?: boolean;
 }
 
 export interface InstallationProject {
@@ -375,9 +383,11 @@ export interface HelpdeskTicket {
   customerAddress: string;
   orderId?: string;
   subject: string;
-  category: 'Installation' | 'Subsidy' | 'Hardware Fault' | 'Technician' | 'General';
-  status: 'Open' | 'In Progress' | 'Resolved';
+  category: 'Installation' | 'Subsidy' | 'Hardware Fault' | 'Technician' | 'General' | 'AI Assistant Escalation' | 'Billing';
+  status: 'Open' | 'In Progress' | 'Resolved' | 'Escalated to Support Staff';
   priority: 'Urgent' | 'High' | 'Normal';
+  isAiEscalated?: boolean;
+  projectPhase?: string;
   messages: HelpdeskMessage[];
   createdAt: string;
   updatedAt: string;

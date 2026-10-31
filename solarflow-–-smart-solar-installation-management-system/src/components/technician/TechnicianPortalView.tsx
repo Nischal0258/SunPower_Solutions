@@ -160,12 +160,12 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({ onNa
       earthingResistanceOhms: Number(earthingResistanceOhms),
       photos: surveyPhotos,
       verdict: surveyVerdict,
-      notes: surveyNotes || 'Rooftop structure sound and ready for mounting installation upon Director approval.'
+      notes: surveyNotes || 'Rooftop structure sound and ready for mounting installation upon Manager approval.'
     };
 
     const success = DataService.submitFeasibilityReport(selectedSurveyProject.id, report);
     if (success) {
-      showToast('Technical Feasibility Report submitted! Transferred to Director for review.', 'success');
+      showToast('Technical Feasibility Report submitted! Transferred to Manager for review.', 'success');
       refreshData();
     } else {
       showToast('Failed to submit feasibility report.', 'error');
@@ -245,7 +245,7 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({ onNa
 
     const success = DataService.submitInstallationCommissioning(selectedInstallProject.id, data);
     if (success) {
-      showToast('Installation handover and customer signature submitted! Ready for Director final sign-off.', 'success');
+      showToast('Installation handover and customer signature submitted! Ready for Manager final sign-off.', 'success');
       refreshData();
     } else {
       showToast('Failed to submit commissioning data.', 'error');
@@ -423,7 +423,7 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({ onNa
                     <div className="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 text-xs text-blue-900 flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0" />
                       <span>
-                        This Feasibility Report was submitted on {selectedSurveyProject.feasibilityReport?.surveyDate || 'today'} and is awaiting Director review.
+                        This Feasibility Report was submitted on {selectedSurveyProject.feasibilityReport?.surveyDate || 'today'} and is awaiting Manager review.
                       </span>
                     </div>
 
@@ -652,7 +652,7 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({ onNa
                       className="w-full py-3 px-4 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-md shadow-[#C66B45]/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       <FileCheck2 className="w-4 h-4" />
-                      <span>Submit Feasibility Report (Advance to Director Approval)</span>
+                      <span>Submit Feasibility Report (Advance to Manager Approval)</span>
                     </button>
                   </form>
                 )}
@@ -807,7 +807,7 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({ onNa
                     <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                       <span>
-                        Handover completed! Customer acceptance signature collected. Pending Director final sign-off & project closure.
+                        Handover completed! Customer acceptance signature collected. Pending Manager final sign-off & project closure.
                       </span>
                     </div>
 
@@ -979,7 +979,7 @@ export const TechnicianPortalView: React.FC<TechnicianPortalViewProps> = ({ onNa
                       className="w-full py-3 px-4 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-md shadow-[#C66B45]/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Submit for Commissioning (Advance to Final Director Closure)</span>
+                      <span>Submit for Commissioning (Advance to Final Manager Closure)</span>
                     </button>
                   </form>
                 )}

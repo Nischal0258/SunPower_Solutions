@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Plus,
+  Download,
   Users,
   FileText,
   Package,
@@ -152,14 +153,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Customer Orders Awaiting Director Approval Banner */}
+      {/* Customer Orders Awaiting Manager Approval Banner */}
       {pendingOrders.length > 0 && (
         <div className="bg-amber-50/70 border border-amber-300/80 rounded-2xl p-5 shadow-xs space-y-3 animate-in fade-in">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
               <h3 className="font-bold text-sm text-slate-900">
-                Customer Solar Orders Awaiting Director Approval ({pendingOrders.length})
+                Customer Solar Orders Awaiting Manager Approval ({pendingOrders.length})
               </h3>
             </div>
             <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
@@ -219,8 +220,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         <div className="flex items-center gap-2.5">
           <button
+            onClick={() => {
+              DataService.exportFinancialYearDataCSV();
+              showToast('Financial Year (FY 2025-26) data exported to CSV successfully.', 'success');
+            }}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all shadow-xs active:scale-[0.99] whitespace-nowrap cursor-pointer"
+            title="Download Complete FY 2025-26 CSV Report"
+          >
+            <Download className="w-4 h-4 text-[#C66B45]" />
+            <span>Download FY Data</span>
+          </button>
+
+          <button
             onClick={onOpenNewProject}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm active:scale-[0.99] whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm active:scale-[0.99] whitespace-nowrap cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New Project</span>

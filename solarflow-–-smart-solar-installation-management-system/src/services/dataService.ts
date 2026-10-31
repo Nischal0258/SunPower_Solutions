@@ -81,7 +81,7 @@ const INITIAL_CUSTOMERS: Customer[] = [
     roofAreaSqFt: 1800,
     sanctionLoadKw: 15,
     monthlyBill: 16000,
-    notes: 'Commercial 15 kW array order placed. Pending Director approval & technician dispatch.',
+    notes: 'Commercial 15 kW array order placed. Pending Manager approval & technician dispatch.',
     createdAt: '2026-10-02T09:00:00Z'
   },
   {
@@ -568,7 +568,7 @@ const INITIAL_PROJECTS: InstallationProject[] = [
         '/src/assets/images/solar_rooftop_installation_1793436857441.jpg'
       ],
       verdict: 'Feasible / Approved for Solar',
-      notes: 'Feasibility verified and approved by Director. Order unlocked for warehouse staging.'
+      notes: 'Feasibility verified and approved by Manager. Order unlocked for warehouse staging.'
     },
     installedProducts: [],
     photos: [],
@@ -1007,7 +1007,7 @@ export const INITIAL_CUSTOMER_ORDERS: CustomerOrder[] = [
     selectedAddons: ['Annual Solar O&M Care Plan'],
     documentUrl: 'Order Confirmation & Feasibility Request',
     timestamp: '2026-10-30',
-    notes: '15 kW Commercial Rooftop Solar Array awaiting Director review and technician assignment'
+    notes: '15 kW Commercial Rooftop Solar Array awaiting Manager review and technician assignment'
   }
 ];
 
@@ -1188,6 +1188,82 @@ export class DataService {
     return { success: true, customer: newCustomer };
   }
 
+  /**
+   * Customer Self-Registration with Automatic Persona & Profile Initialization
+   */
+  public static registerCustomer(payload: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    propertyType: 'Residential' | 'Commercial';
+    monthlyBill: number;
+    password?: string;
+  }): { success: boolean; customer: Customer; error?: string } {
+    const data = this.load();
+    const cleanEmail = payload.email.trim().toLowerCase();
+    const cleanPhone = payload.phone.trim();
+
+    // Check duplicate
+    const existing = data.customers.find(
+      c => c.email.toLowerCase() === cleanEmail || c.phone === cleanPhone
+    );
+    if (existing) {
+      return { success: true, customer: existing };
+    }
+
+    const newId = `CUST-${String(data.customers.length + 1).padStart(3, '0')}`;
+    const city = payload.address.includes(',') ? payload.address.split(',')[1].trim() : 'Pune';
+    const state = payload.address.includes('Karnataka') ? 'Karnataka' : payload.address.includes('Telangana') ? 'Telangana' : 'Maharashtra';
+
+    // Estimate capacity from bill (approx 1 kW per ₹900 - ₹1000 monthly bill)
+    const estimatedKw = Math.max(3, Math.min(25, Math.round(payload.monthlyBill / 900)));
+    const estimatedRoof = estimatedKw * 100;
+
+    const newCust: Customer = {
+      id: newId,
+      name: payload.name.trim(),
+      email: cleanEmail,
+      phone: cleanPhone,
+      address: payload.address.trim(),
+      city,
+      state,
+      pincode: '411045',
+      enquiryDate: new Date().toISOString().split('T')[0],
+      leadStatus: 'Hot',
+      monthlyBill: payload.monthlyBill,
+      propertyType: payload.propertyType,
+      sanctionLoadKw: estimatedKw,
+      roofAreaSqFt: estimatedRoof,
+      notes: `Registered via Self Sign-Up. Property: ${payload.propertyType}, Avg Monthly Bill: ₹${payload.monthlyBill.toLocaleString('en-IN')}`,
+      createdAt: new Date().toISOString()
+    };
+
+    data.customers.unshift(newCust);
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'customer',
+      title: `New Customer Registration: ${newCust.name}`,
+      description: `Self-registered customer with ${newCust.propertyType} property. Avg Bill: ₹${payload.monthlyBill}.`,
+      timestamp: new Date().toISOString(),
+      actor: newCust.name
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `New Customer Registered: ${newCust.name}`,
+      message: `${newCust.name} (${cleanEmail}) registered via portal.`,
+      type: 'info',
+      date: 'Just now',
+      read: false,
+      linkTab: 'customers'
+    });
+
+    this.save(data);
+    return { success: true, customer: newCust };
+  }
+
   public static deleteCustomer(id: string): boolean {
     const data = this.load();
     const customer = data.customers.find(c => c.id === id);
@@ -1338,9 +1414,8 @@ export class DataService {
     const projectId = `PRJ-2026-${nextProjNum}`;
     quote.convertedToProjectId = projectId;
 
-    const tech = TECHNICIANS.find(t => t.id === technicianId) || TECHNICIANS[0];
+    const assignedTech = technicianId ? TECHNICIANS.find(t => t.id === technicianId) : undefined;
 
-    const todayStr = new Date().toISOString().split('T')[0];
     const newProject: InstallationProject = {
       id: `PRJ-${String(data.projects.length + 1).padStart(3, '0')}`,
       projectId,
@@ -1352,12 +1427,12 @@ export class DataService {
       customerAddress: quote.customerAddress,
       capacityKw: quote.capacityKw,
       systemType: quote.systemType,
-      technicianId: tech.id,
-      technicianName: tech.name,
-      surveyDate: todayStr,
+      technicianId: assignedTech?.id,
+      technicianName: assignedTech?.name,
+      surveyDate: '',
       installationDate: '',
-      stage: 'Survey Pending',
-      progressPercent: 20,
+      stage: 'Order Placed',
+      progressPercent: 15,
       installedProducts: [],
       photos: [],
       customerApproved: false,
@@ -1372,13 +1447,51 @@ export class DataService {
       cust.leadStatus = 'Converted';
     }
 
+    // Link or create CustomerOrder for customer portal
+    if (!data.customerOrders) data.customerOrders = [...INITIAL_CUSTOMER_ORDERS];
+    const existingOrder = data.customerOrders.find(o => o.quotationId === quote.id || o.customerId === quote.customerId);
+    if (!existingOrder) {
+      data.customerOrders.unshift({
+        id: `ORD-2026-${nextProjNum}`,
+        customerId: quote.customerId,
+        customerName: quote.customerName,
+        customerEmail: cust?.email || `${quote.customerName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+        contactNumber: quote.customerPhone,
+        installationAddress: quote.customerAddress,
+        city: cust?.city || 'Pune',
+        state: cust?.state || 'Maharashtra',
+        systemType: quote.systemType,
+        capacityKw: quote.capacityKw,
+        grossCost: quote.grandTotal,
+        centralSubsidy: quote.capacityKw >= 3 ? 78000 : quote.capacityKw * 30000,
+        stateSubsidy: 10000,
+        netPayable: Math.max(0, quote.grandTotal - (quote.capacityKw >= 3 ? 78000 : quote.capacityKw * 30000) - 10000),
+        status: 'Order Placed',
+        progressPercent: 15,
+        projectId: newProject.projectId,
+        quotationId: quote.id,
+        timestamp: new Date().toISOString().split('T')[0],
+        notes: `Turnkey Solar project converted from quote ${quote.quotationNumber}. Pending Manager survey assignment.`
+      });
+    }
+
     data.activities.unshift({
       id: `ACT-${Date.now()}`,
       type: 'project',
       title: `Project ${projectId} Initiated`,
-      description: `Generated from approved quotation ${quote.quotationNumber} for ${quote.customerName}`,
+      description: `Generated from approved quotation ${quote.quotationNumber} for ${quote.customerName}. Initial status: Pending Survey Assignment.`,
       timestamp: 'Just now',
-      actor: 'Current User'
+      actor: 'Sales Team'
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `New Project: ${projectId}`,
+      message: `Quotation ${quote.quotationNumber} converted to active project. Awaiting Manager survey assignment.`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
     });
 
     this.save(data);
@@ -1772,7 +1885,7 @@ export class DataService {
   // ==========================================================================
 
   /**
-   * Stage 2: Director selects technician and clicks "Assign Technician"
+   * Stage 2: Manager selects technician and clicks "Assign Technician"
    * Transitions status to 'Survey Assigned'
    */
   public static assignTechnicianToSurvey(
@@ -1792,7 +1905,7 @@ export class DataService {
     proj.technicianName = tech.name;
     proj.surveyDate = scheduledDate;
     if (notes) {
-      proj.approvalNotes = (proj.approvalNotes ? proj.approvalNotes + ' | ' : '') + `Director notes: ${notes}`;
+      proj.approvalNotes = (proj.approvalNotes ? proj.approvalNotes + ' | ' : '') + `Manager notes: ${notes}`;
     }
 
     // Sync matching customer order
@@ -1818,9 +1931,9 @@ export class DataService {
       id: `ACT-${Date.now()}`,
       type: 'project',
       title: `Survey Assigned: ${proj.projectId}`,
-      description: `Director assigned technician ${tech.name} for site survey on ${scheduledDate}.`,
+      description: `Manager assigned technician ${tech.name} for site survey on ${scheduledDate}.`,
       timestamp: new Date().toISOString(),
-      actor: 'Dr. Singhania (Director)'
+      actor: 'Dr. Singhania (Operations Manager)'
     });
 
     // Notify Field Technician
@@ -1905,7 +2018,7 @@ export class DataService {
     data.notifications.unshift({
       id: `NOTIF-${Date.now()}`,
       title: `Feasibility Review Required: ${proj.projectId}`,
-      message: `Feasibility report submitted by ${report.technicianName || report.surveyorName || 'Lead Technician'}. Awaiting Director review.`,
+      message: `Feasibility report submitted by ${report.technicianName || report.surveyorName || 'Lead Technician'}. Awaiting Manager review.`,
       type: 'action',
       date: 'Just now',
       read: false,
@@ -1917,7 +2030,7 @@ export class DataService {
   }
 
   /**
-   * Stage 5: Director approves completed feasibility report
+   * Stage 5: Manager approves completed feasibility report
    * Transitions status to 'Feasibility Approved' (Unlocks Warehouse Dispatch)
    */
   public static approveFeasibilityReport(projectId: string, directorNotes?: string): boolean {
@@ -1944,9 +2057,9 @@ export class DataService {
       id: `ACT-${Date.now()}`,
       type: 'project',
       title: `Feasibility Approved: ${proj.projectId}`,
-      description: `Director approved technical feasibility report for ${proj.customerName}. Warehouse hardware dispatch unlocked.`,
+      description: `Operations Manager approved technical feasibility report for ${proj.customerName}. Warehouse hardware dispatch unlocked.`,
       timestamp: new Date().toISOString(),
-      actor: 'Dr. Singhania (Director)'
+      actor: 'Dr. Singhania (Operations Manager)'
     });
 
     data.notifications.unshift({
@@ -1964,7 +2077,7 @@ export class DataService {
   }
 
   /**
-   * Stage 5 (Alternative): Director requests re-survey
+   * Stage 5 (Alternative): Manager requests re-survey
    * Transitions status back to 'Survey Assigned' with notes
    */
   public static requestResurvey(projectId: string, reason: string): boolean {
@@ -1991,7 +2104,7 @@ export class DataService {
     data.notifications.unshift({
       id: `NOTIF-${Date.now()}`,
       title: `Re-survey Requested: ${proj.projectId}`,
-      message: `Director requested re-survey: "${reason}". Please re-visit site to gather updated specs.`,
+      message: `Operations Manager requested re-survey: "${reason}". Please re-visit site to gather updated specs.`,
       type: 'warning',
       date: 'Just now',
       read: false,
@@ -2147,7 +2260,7 @@ export class DataService {
     data.notifications.unshift({
       id: `NOTIF-${Date.now()}`,
       title: `Commissioning Sign-Off Required: ${proj.projectId}`,
-      message: `Customer ${proj.customerName} signed on-site handover. Director review required to close project.`,
+      message: `Customer ${proj.customerName} signed on-site handover. Operations Manager review required to close project.`,
       type: 'action',
       date: 'Just now',
       read: false,
@@ -2159,7 +2272,7 @@ export class DataService {
   }
 
   /**
-   * Stage 8: Director approves final commissioning and closes project
+   * Stage 8: Operations Manager approves final commissioning and closes project
    * Transitions status to 'Commissioned & Closed' (100% Complete)
    * Auto-generates Warranty & Commissioning Certificate
    */
@@ -2191,9 +2304,9 @@ export class DataService {
       id: `ACT-${Date.now()}`,
       type: 'project',
       title: `Project Commissioned & Closed: ${proj.projectId}`,
-      description: `Director Dr. Singhania officially signed off final commissioning for ${proj.customerName}. Warranty certificate released.`,
+      description: `Operations Manager Dr. Singhania officially signed off final commissioning for ${proj.customerName}. Warranty certificate released.`,
       timestamp: new Date().toISOString(),
-      actor: 'Dr. Singhania (Director)'
+      actor: 'Dr. Singhania (Operations Manager)'
     });
 
     data.notifications.unshift({
@@ -2229,7 +2342,7 @@ export class DataService {
     order.assignedTechnicianPhone = tech.phone;
     order.scheduledSurveyDate = scheduledDate;
     if (notes) {
-      order.notes = (order.notes ? order.notes + ' | ' : '') + `Director notes: ${notes}`;
+      order.notes = (order.notes ? order.notes + ' | ' : '') + `Manager notes: ${notes}`;
     }
 
     // Update associated InstallationProject
@@ -2255,9 +2368,9 @@ export class DataService {
       id: `ACT-${Date.now()}`,
       type: 'project',
       title: `Order Approved: ${order.id}`,
-      description: `Director approved order ${order.id} for ${order.customerName}. Technician ${tech.name} dispatched for site survey on ${scheduledDate}.`,
+      description: `Operations Manager approved order ${order.id} for ${order.customerName}. Technician ${tech.name} dispatched for site survey on ${scheduledDate}.`,
       timestamp: new Date().toISOString(),
-      actor: 'Dr. Singhania (Director)'
+      actor: 'Dr. Singhania (Operations Manager)'
     });
 
     // Add notification
@@ -2405,7 +2518,7 @@ export class DataService {
     return true;
   }
 
-  public static updateHelpdeskTicketStatus(ticketId: string, status: 'Open' | 'In Progress' | 'Resolved'): boolean {
+  public static updateHelpdeskTicketStatus(ticketId: string, status: HelpdeskTicket['status']): boolean {
     const data = this.load();
     if (!data.helpdeskTickets) data.helpdeskTickets = [...INITIAL_HELPDESK_TICKETS];
     const ticket = data.helpdeskTickets.find(t => t.id === ticketId);
@@ -2416,4 +2529,181 @@ export class DataService {
     this.save(data);
     return true;
   }
+
+  /**
+   * AI Chatbot Escalation: Connect Customer directly to Support & Operations Staff
+   * Escalates the active session to human staff with full conversation transcript
+   */
+  public static escalateAIChat(payload: {
+    customerId: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    orderId?: string;
+    projectPhase?: string;
+    subject?: string;
+    messages: Array<{
+      id: string;
+      sender: 'customer' | 'bot' | 'agent';
+      senderName: string;
+      text: string;
+      timestamp: string;
+    }>;
+  }): HelpdeskTicket {
+    const data = this.load();
+    if (!data.helpdeskTickets) data.helpdeskTickets = [...INITIAL_HELPDESK_TICKETS];
+
+    const now = new Date().toISOString();
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Check if customer has an existing open escalation
+    let ticket = data.helpdeskTickets.find(
+      t => t.customerId === payload.customerId && (t.status === 'Open' || t.status === 'Escalated to Support Staff' || t.status === 'In Progress')
+    );
+
+    if (!ticket) {
+      const ticketId = `TKT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+      ticket = {
+        id: ticketId,
+        customerId: payload.customerId,
+        customerName: payload.customerName,
+        customerEmail: payload.customerEmail,
+        customerPhone: payload.customerPhone || '+91 98201 12345',
+        customerAddress: payload.customerAddress || 'Customer Site',
+        orderId: payload.orderId || 'ORD-2026-088',
+        projectPhase: payload.projectPhase || 'Site Survey',
+        subject: payload.subject || `AI Assistant Escalation - ${payload.projectPhase || 'Live Order Help'}`,
+        category: 'AI Assistant Escalation',
+        status: 'Escalated to Support Staff',
+        priority: 'High',
+        isAiEscalated: true,
+        messages: payload.messages.length > 0
+          ? payload.messages.map(m => ({ ...m }))
+          : [
+              {
+                id: `msg-${Date.now()}`,
+                sender: 'customer',
+                senderName: payload.customerName,
+                text: 'Customer requested human staff connection.',
+                timestamp: nowTime
+              }
+            ],
+        createdAt: now,
+        updatedAt: now
+      };
+      data.helpdeskTickets.unshift(ticket);
+    } else {
+      ticket.isAiEscalated = true;
+      ticket.status = 'Escalated to Support Staff';
+      ticket.priority = 'High';
+      ticket.category = 'AI Assistant Escalation';
+      if (payload.projectPhase) ticket.projectPhase = payload.projectPhase;
+      if (payload.orderId) ticket.orderId = payload.orderId;
+      ticket.messages = payload.messages.map(m => ({ ...m }));
+      ticket.updatedAt = now;
+    }
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'service',
+      title: `AI Chat Escalated: ${ticket.customerName}`,
+      description: `Customer requested live human staff handoff. Project Phase: ${ticket.projectPhase || 'Active'}.`,
+      timestamp: 'Just now',
+      actor: ticket.customerName
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `AI Escalation: ${ticket.customerName}`,
+      message: `Customer escalated support session to staff. Phase: ${ticket.projectPhase || 'Active'}. Click to respond.`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'tickets'
+    });
+
+    this.save(data);
+    return ticket;
+  }
+
+  /**
+   * Export Financial Year (FY) Data to CSV
+   * Columns: Order ID | Customer Name | System Size (kW) | Total Value | Subsidy Claimed | Net Margin | Completion Date | FY Period
+   */
+  public static exportFinancialYearDataCSV(): string {
+    const data = this.load();
+    const rows: string[][] = [
+      ['Order ID', 'Customer Name', 'System Size (kW)', 'Total Value (INR)', 'Subsidy Claimed (INR)', 'Net Margin (INR)', 'Completion Date', 'FY Period']
+    ];
+
+    const projects = data.projects && data.projects.length > 0 ? data.projects : INITIAL_PROJECTS;
+
+    projects.forEach(p => {
+      const orderId = p.projectId || p.id;
+      const custName = p.customerName || 'Customer';
+      const kwVal = p.capacityKw || 5;
+      const sizeKw = `${kwVal} kW`;
+      const totalVal = Math.round(kwVal * 70000);
+      const subsidy = kwVal <= 1 ? 30000 : kwVal <= 2 ? 60000 : 78000;
+      const netMargin = Math.round(totalVal * 0.22);
+      const compDate = p.completionDate || p.commissioningData?.completionDate || p.installationDate || '2026-03-25';
+      const fy = 'FY 2025-26';
+
+      rows.push([
+        orderId,
+        `"${custName.replace(/"/g, '""')}"`,
+        `"${sizeKw}"`,
+        totalVal.toString(),
+        subsidy.toString(),
+        netMargin.toString(),
+        compDate,
+        fy
+      ]);
+    });
+
+    // Also include customer orders not in projects list
+    if (data.customerOrders) {
+      data.customerOrders.forEach(o => {
+        if (!projects.some(p => p.projectId === o.id || p.id === o.id || p.projectId === o.projectId)) {
+          const sizeKw = `${o.capacityKw} kW`;
+          const totalVal = o.grossCost || Math.round(o.capacityKw * 70000);
+          const subsidy = o.centralSubsidy || (o.capacityKw <= 1 ? 30000 : o.capacityKw <= 2 ? 60000 : 78000);
+          const netMargin = Math.round(totalVal * 0.22);
+          const compDate = o.timestamp ? o.timestamp.split('T')[0] : '2026-03-30';
+          rows.push([
+            o.id,
+            `"${(o.customerName || 'Customer').replace(/"/g, '""')}"`,
+            `"${sizeKw}"`,
+            totalVal.toString(),
+            subsidy.toString(),
+            netMargin.toString(),
+            compDate,
+            'FY 2025-26'
+          ]);
+        }
+      });
+    }
+
+    const csvContent = rows.map(r => r.join(',')).join('\n');
+
+    if (typeof window !== 'undefined') {
+      try {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'SolarFlow_Financial_Year_FY2025_26_Report.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error('Failed to trigger CSV download', e);
+      }
+    }
+
+    return csvContent;
+  }
+
 }

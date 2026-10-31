@@ -185,7 +185,8 @@ export const ReportsPage: React.FC = () => {
   ];
 
   const handleExportCSV = () => {
-    showToast(`SunPower financial report (${currentMetrics.periodLabel}) exported to CSV successfully.`, 'success');
+    DataService.exportFinancialYearDataCSV();
+    showToast('SolarFlow FY 2025-26 financial report exported to CSV successfully.', 'success');
   };
 
   const activeMetric = hoveredMonthIndex !== null ? monthlyData[hoveredMonthIndex] : monthlyData[monthlyData.length - 2];
@@ -237,10 +238,11 @@ export const ReportsPage: React.FC = () => {
           </span>
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-[#E7E2D9] bg-white text-[#292724] font-semibold hover:bg-[#F5F3EF] shadow-2xs"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-[#E7E2D9] bg-white text-[#292724] font-semibold hover:bg-[#F5F3EF] shadow-2xs cursor-pointer"
+            title="Download Complete FY 2025-26 CSV Report"
           >
-            <Download className="w-3.5 h-3.5 text-[#292724]/70" />
-            <span>Export Financial Report</span>
+            <Download className="w-3.5 h-3.5 text-[#C66B45]" />
+            <span>Download FY Data (CSV)</span>
           </button>
         </div>
       </div>

@@ -54,12 +54,12 @@ export const USER_ROLES: Record<UserRole, RoleInfo> = {
   },
   director: {
     id: 'director',
-    title: 'Managing Director & Operations',
+    title: 'Operations Manager',
     name: 'Dr. Singhania',
-    badge: 'Executive',
+    badge: 'Manager',
     avatarColor: 'bg-purple-600',
     recommendedTab: 'dashboard',
-    description: 'Consolidated executive & operations oversight: quotation approvals, site survey sign-offs, technician dispatches, and P&L',
+    description: 'Consolidated operations management: quotation approvals, site survey sign-offs, technician dispatches, and P&L',
     allowedTabs: [
       'dashboard',
       'customers',
