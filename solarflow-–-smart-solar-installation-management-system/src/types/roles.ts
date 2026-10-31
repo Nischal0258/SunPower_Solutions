@@ -1,4 +1,4 @@
-﻿export type NavTab = 
+export type NavTab = 
   | 'dashboard'
   | 'customers'
   | 'quotations'
@@ -11,7 +11,8 @@
   | 'settings';
 
 export type UserRole = 
-  | 'director'      // Managing Director / Executive (Mr. Singhania)
+  | 'manager'       // Operations Manager (Dr. Singhania)
+  | 'director'      // Managing Director / Executive
   | 'sales'         // Sales & CRM Lead (Priya)
   | 'surveyor'      // Field Site Surveyor (Manoj Kumar)
   | 'warehouse'     // Warehouse & Logistics (Vikram Singh)
@@ -31,10 +32,31 @@ export interface RoleInfo {
 }
 
 export const USER_ROLES: Record<UserRole, RoleInfo> = {
+  manager: {
+    id: 'manager',
+    title: 'Operations Manager',
+    name: 'Dr. Singhania',
+    badge: 'Manager',
+    avatarColor: 'bg-purple-600',
+    recommendedTab: 'dashboard',
+    description: 'Operations oversight: quotation approvals, survey approvals & company performance',
+    allowedTabs: [
+      'dashboard',
+      'customers',
+      'quotations',
+      'warehouse',
+      'inventory',
+      'installations',
+      'warranties',
+      'tickets',
+      'reports',
+      'settings'
+    ],
+  },
   director: {
     id: 'director',
     title: 'Managing Director',
-    name: 'D. Singhania',
+    name: 'Dr. Singhania',
     badge: 'Executive',
     avatarColor: 'bg-purple-600',
     recommendedTab: 'dashboard',
@@ -79,7 +101,7 @@ export const USER_ROLES: Record<UserRole, RoleInfo> = {
     badge: 'Warehouse',
     avatarColor: 'bg-emerald-600',
     recommendedTab: 'warehouse',
-    description: 'Order dispatch, inverter serial number scan & warranty clock initiation',
+    description: 'Order dispatch, inverter manual serial entry & warranty clock initiation',
     allowedTabs: ['warehouse', 'inventory', 'installations', 'warranties'],
   },
   technician: {
@@ -90,7 +112,6 @@ export const USER_ROLES: Record<UserRole, RoleInfo> = {
     avatarColor: 'bg-cyan-600',
     recommendedTab: 'installations',
     description: 'Rooftop mounting, photo QA audit & customer signature sign-off',
-    // Strictly restricted from Director/Executive features like Dashboard, Reports, Quotes & Settings!
     allowedTabs: ['installations', 'tickets', 'warranties'],
   },
   support: {

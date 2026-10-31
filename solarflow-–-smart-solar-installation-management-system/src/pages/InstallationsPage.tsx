@@ -31,12 +31,14 @@ interface InstallationsPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
   initialProjectId?: string;
   onOpenSiteSurvey?: () => void;
+  currentRole?: UserRole;
 }
 
 export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   onNavigateTab,
   initialProjectId,
-  onOpenSiteSurvey
+  onOpenSiteSurvey,
+  currentRole = "manager"
 }) => {
   const { showToast } = useToast();
   const [projects, setProjects] = useState<InstallationProject[]>(DataService.getProjects());
@@ -370,7 +372,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
             title="Record rooftop azimuth, tilt, shading, and earthing test"
           >
             <Compass className="w-4 h-4 text-[#C66B45]" />
-            <span>Conduct Site Survey</span>
+            <span>{currentRole === "manager" || currentRole === "director" ? "View Site Surveys" : "Conduct Site Survey"}</span>
           </button>
 
           <button
@@ -510,7 +512,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 shrink-0 transition-colors shadow-xs"
               >
                 <Compass className="w-3.5 h-3.5" />
-                <span>{activeProject.stage === 'Survey Completed' ? 'Review Survey Details' : 'Launch Site Survey'}</span>
+                <span>{currentRole === 'manager' || currentRole === 'director' ? 'Review & Approve Survey' : activeProject.stage === 'Survey Completed' ? 'Review Survey Details' : 'Launch Site Survey'}</span>
               </button>
             </div>\n\n            {/* Stage Progression Bar */}
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">

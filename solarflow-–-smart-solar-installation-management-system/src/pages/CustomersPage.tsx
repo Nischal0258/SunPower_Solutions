@@ -27,13 +27,11 @@ import { NavTab } from '../components/layout/Sidebar';
 interface CustomersPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
   initialCustomerId?: string;
-  onOpenSiteSurvey?: () => void;
 }
 
 export const CustomersPage: React.FC<CustomersPageProps> = ({
   onNavigateTab,
-  initialCustomerId,
-  onOpenSiteSurvey
+  initialCustomerId
 }) => {
   const { showToast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>(DataService.getCustomers());

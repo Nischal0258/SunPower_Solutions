@@ -95,27 +95,28 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogin = (role: UserRole = 'director') => {
+  const handleLogin = (role: UserRole = 'manager') => {
+    const rInfo = USER_ROLES[role] || USER_ROLES.manager;
     const newSession: AuthSession = {
-      role: 'director',
-      name: 'Dr. Singhania',
-      email: 'd.singhania@sunpower.in',
-      title: 'Managing Director',
-      badge: 'Executive',
-      avatarColor: 'bg-purple-600'
+      role,
+      name: rInfo.name,
+      email: `${role}@gmail.com`,
+      title: rInfo.title,
+      badge: rInfo.badge,
+      avatarColor: rInfo.avatarColor
     };
 
     setSession(newSession);
-    setCurrentTab('dashboard');
+    setCurrentTab(rInfo.recommendedTab);
 
     try {
       localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(newSession));
-      localStorage.setItem(STORAGE_TAB_KEY, 'dashboard');
+      localStorage.setItem(STORAGE_TAB_KEY, rInfo.recommendedTab);
     } catch (e) {
       console.warn('Failed to persist session:', e);
     }
 
-    showToast('Signed in successfully as Dr. Singhania.', 'success');
+    showToast(`Signed in successfully as ${rInfo.name} (${rInfo.title}).`, 'success');
   };
 
   const handleLogout = () => {
@@ -209,7 +210,6 @@ function AppContent() {
             <CustomersPage
               onNavigateTab={handleNavigate}
               initialCustomerId={targetId}
-              onOpenSiteSurvey={() => setIsGlobalSurveyOpen(true)}
             />
           )}
 
@@ -217,6 +217,7 @@ function AppContent() {
             <QuotationsPage
               onNavigateTab={handleNavigate}
               initialQuotationId={targetId}
+              currentRole={currentRole}
             />
           )}
 
@@ -236,6 +237,7 @@ function AppContent() {
             <InstallationsPage
               onNavigateTab={handleNavigate}
               initialProjectId={targetId}
+              currentRole={currentRole}
               onOpenSiteSurvey={() => setIsGlobalSurveyOpen(true)}
             />
           )}

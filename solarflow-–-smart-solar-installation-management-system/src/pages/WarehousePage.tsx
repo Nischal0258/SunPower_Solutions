@@ -1,354 +1,366 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
+  Package,
   Truck,
-  Scan,
-  QrCode,
   CheckCircle2,
   AlertTriangle,
-  Package,
-  Calendar,
-  Clock,
+  ArrowRight,
   ShieldCheck,
   Search,
-  Filter,
-  Boxes,
-  ArrowRight
+  ExternalLink,
+  Plus,
+  Trash2,
+  Clock,
+  KeyRound
 } from 'lucide-react';
 import { DataService } from '../services/dataService';
-import { InstallationProject } from '../types';
-import { SerialNumberScanModal } from '../components/common/SerialNumberScanModal';
 import { useToast } from '../components/common/Toast';
-import { NavTab } from '../types/roles';
+import { NavTab } from '../components/layout/Sidebar';
 
 interface WarehousePageProps {
-  onNavigateTab?: (tab: NavTab, targetId?: string) => void;
+  onNavigateTab: (tab: NavTab, targetId?: string) => void;
 }
 
 export const WarehousePage: React.FC<WarehousePageProps> = ({ onNavigateTab }) => {
   const { showToast } = useToast();
-  const [projects, setProjects] = useState<InstallationProject[]>(DataService.getProjects());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStage, setFilterStage] = useState<string>('All');
+  const projects = DataService.getProjects();
+  const inventory = DataService.getInventory();
 
-  // Scanner modal state
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [targetProject, setTargetProject] = useState<InstallationProject | null>(null);
+  // Active project selection for dispatch
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(projects[0]?.id || 'PRJ-2026-042');
+  
+  // Manual serial number entry state
+  const [manualSerialInput, setManualSerialInput] = useState('');
 
-  // Scanned serials map (projectId -> array of serials)
-  const [scannedSerials, setScannedSerials] = useState<Record<string, string[]>>({
-    'PRJ-2026-042': ['INV-3KW-9901-X', 'PNL-LOT-545W-44'],
+  // Registered serials map (projectId -> array of serials)
+  const [registeredSerials, setRegisteredSerials] = useState<Record<string, string[]>>({
+    'PRJ-2026-042': ['INV-GW-5000-8831', 'BAT-PY-48100-2401'],
+    'PRJ-2026-045': [],
+    'PRJ-2026-046': []
   });
 
-  const refreshList = () => {
-    setProjects(DataService.getProjects());
-  };
-
-  // Filter projects relevant to warehouse dispatch
-  const dispatchProjects = projects.filter(p => {
-    const isDispatchEligible =
-      p.stage === 'Survey Completed' ||
-      p.stage === 'Material Ready' ||
-      p.stage === 'Installation Scheduled';
-
-    const matchesSearch =
-      p.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.projectId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.customerAddress.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesFilter = filterStage === 'All' || p.stage === filterStage;
-
-    return isDispatchEligible && matchesSearch && matchesFilter;
+  // Staged truck dispatch state
+  const [dispatchStatus, setDispatchStatus] = useState<Record<string, { dispatched: boolean; truckNo: string; driverName: string; time: string }>>({
+    'PRJ-2026-042': {
+      dispatched: false,
+      truckNo: 'MH-12-RN-8831',
+      driverName: 'Ramesh Patil',
+      time: '10:30 AM'
+    }
   });
 
-  const handleScanSerial = (code: string) => {
-    if (!targetProject) {
-      showToast(`Scanned equipment serial number: ${code}`, 'info');
+  const activeProject = projects.find(p => p.id === selectedProjectId) || projects[0];
+
+  const handleAddManualSerial = (serialToRegister?: string) => {
+    const code = (serialToRegister || manualSerialInput).trim().toUpperCase();
+    if (!code) {
+      showToast('Please enter an equipment serial number.', 'warning');
       return;
     }
-    const pid = targetProject.projectId || targetProject.id;
-    const existing = scannedSerials[pid] || [];
-    if (!existing.includes(code)) {
-      setScannedSerials(prev => ({
-        ...prev,
-        [pid]: [...(prev[pid] || []), code]
-      }));
+
+    const pid = activeProject?.id || 'PRJ-2026-042';
+    const existing = registeredSerials[pid] || [];
+    if (existing.includes(code)) {
+      showToast(`Serial number ${code} is already registered.`, 'warning');
+      return;
     }
-    showToast(`Serial number ${code} registered for order ${pid}`, 'success');
+
+    setRegisteredSerials(prev => ({
+      ...prev,
+      [pid]: [...existing, code]
+    }));
+    setManualSerialInput('');
+    showToast(`Serial number ${code} registered successfully.`, 'success');
   };
 
-  const handleAuthorizeDispatch = (proj: InstallationProject) => {
-    const pid = proj.projectId || proj.id;
-    const serials = scannedSerials[pid] || [];
+  const handleRemoveSerial = (serialToRemove: string) => {
+    const pid = activeProject?.id || 'PRJ-2026-042';
+    const existing = registeredSerials[pid] || [];
+    setRegisteredSerials(prev => ({
+      ...prev,
+      [pid]: existing.filter(s => s !== serialToRemove)
+    }));
+    showToast(`Removed serial number ${serialToRemove}.`, 'info');
+  };
+
+  const handleAuthorizeDeparture = () => {
+    const pid = activeProject?.id || 'PRJ-2026-042';
+    const serials = registeredSerials[pid] || [];
 
     if (serials.length === 0) {
-      showToast('Mandatory Inverter serial number scan required before authorizing truck departure.', 'error');
+      showToast('Mandatory Inverter serial number entry required before authorizing truck departure.', 'error');
       return;
     }
 
-    // Register 20-year and 2-year warranty clocks automatically
+    // Register warranties in DataService
     serials.forEach(s => {
-      const isPanel = s.includes('PNL');
-      DataService.registerWarranty({
+      DataService.addWarranty({
+        customerId: activeProject.customerId,
         serialNumber: s,
-        productCategory: s.includes('BAT') ? 'Batteries' : isPanel ? 'Solar Panels' : 'Inverters',
-        productName: s.includes('BAT')
-          ? 'Exide LiFePO4 Battery Bank'
-          : isPanel
-          ? 'Waaree Mono-PERC Panel Lot'
-          : 'Growatt Single-Phase Inverter',
-        model: 'Certified OEM Unit',
-        customerId: proj.customerId,
-        customerName: proj.customerName,
-        customerPhone: proj.customerPhone,
-        customerAddress: proj.customerAddress,
-        projectId: pid,
-        deliveryDate: new Date().toISOString().split('T')[0],
-        warrantyYears: isPanel ? 20 : 2
+        productCategory: s.includes('BAT') ? 'Battery' : 'Inverter',
+        brand: 'Growatt / Pylontech',
+        model: 'Solar Equipment Unit',
+        warrantyYears: 2,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'Active',
+        supportContact: '+91 20 2553 4400'
       });
     });
 
-    DataService.updateProjectStage(proj.id, 'Material Ready');
-    showToast(
-      `Order ${pid} authorized for truck departure! 2-Year Inverter Warranty Clock auto-activated.`,
-      'success'
-    );
-    refreshList();
+    setDispatchStatus(prev => ({
+      ...prev,
+      [pid]: {
+        dispatched: true,
+        truckNo: prev[pid]?.truckNo || 'MH-12-RN-8831',
+        driverName: prev[pid]?.driverName || 'Ramesh Patil',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    }));
+
+    showToast(`Truck departure authorized! 2-Year warranty clock initiated for order ${pid}.`, 'success');
   };
 
-  const totalAwaiting = projects.filter(p => p.stage === 'Survey Completed').length;
-  const totalReady = projects.filter(p => p.stage === 'Material Ready').length;
-
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm border border-slate-800">
-        <div className="space-y-1">
+    <div className="space-y-6 pb-12 text-xs">
+      {/* Header Banner */}
+      <div className="bg-white p-5 rounded-xl border border-[#E7E2D9] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#C66B45] text-white text-[10px] font-bold uppercase tracking-wider">
-              Scene 3 Engine
-            </span>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              Warehouse & Logistics Dispatch Hub
-            </h2>
+            <Truck className="w-5 h-5 text-[#C66B45]" />
+            <h2 className="text-base sm:text-lg font-bold text-[#292724]">Warehouse Dispatch & Logistics Hub</h2>
           </div>
-          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-            Verify high-value serialized equipment, scan hardware serial numbers, and authorize truck departures. Every dispatch automatically initiates the customer's 2-Year and 20-Year warranty clocks.
+          <p className="text-xs text-[#292724]/70 mt-1">
+            Manual serial registration, staging verification, and truck departure authorization
           </p>
         </div>
 
         <button
-          onClick={() => {
-            setTargetProject(dispatchProjects[0] || null);
-            setIsScannerOpen(true);
-          }}
-          className="px-4 py-2.5 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shrink-0"
+          onClick={() => onNavigateTab('inventory')}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#E7E2D9] bg-white text-[#292724] font-semibold hover:bg-[#F5F3EF] shadow-2xs self-start sm:self-auto"
         >
-          <Scan className="w-4 h-4" />
-          <span>Scan Equipment Serial</span>
+          <Package className="w-4 h-4 text-[#292724]/70" />
+          <span>Check Inventory Stock</span>
         </button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] text-slate-600 font-medium block">Awaiting Packing</span>
-          <span className="text-xl font-bold text-[#C66B45] mt-1 block">{totalAwaiting} Orders</span>
-        </div>
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] text-slate-600 font-medium block">Ready for Truck</span>
-          <span className="text-xl font-bold text-emerald-600 mt-1 block">{totalReady} Staged</span>
-        </div>
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] text-slate-600 font-medium block">Active Warranty Clocks</span>
-          <span className="text-xl font-bold text-blue-600 mt-1 block">{DataService.getWarranties().length} Units</span>
-        </div>
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[11px] text-slate-600 font-medium block">Serial Scanner Status</span>
-          <span className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Optical Ready
-          </span>
-        </div>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by order ID, customer name or city..."
-            className="w-full pl-9 pr-3 py-2 rounded-lg text-xs bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:border-[#C66B45]"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <select
-            value={filterStage}
-            onChange={(e) => setFilterStage(e.target.value)}
-            className="px-3 py-2 rounded-lg text-xs border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#C66B45]"
-          >
-            <option value="All">All Dispatch Stages</option>
-            <option value="Survey Completed">Awaiting Packing (Gate Passed)</option>
-            <option value="Material Ready">Material Ready / Staged</option>
-            <option value="Installation Scheduled">Installation Scheduled</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Dispatch Orders List */}
-      <div className="space-y-4">
-        {dispatchProjects.length === 0 ? (
-          <div className="p-10 text-center bg-white rounded-xl border border-slate-200 text-xs text-slate-500 space-y-2">
-            <Package className="w-8 h-8 text-slate-900/30 mx-auto" />
-            <p className="font-semibold text-slate-900">No orders pending warehouse dispatch.</p>
-            <p className="text-[11px]">All approved customer installations have been packed and staged for truck departure.</p>
+      {/* Main Grid: Orders & Staging Details */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left: Dispatch Queue */}
+        <div className="lg:col-span-5 bg-white p-5 rounded-xl border border-[#E7E2D9] shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E7E2D9]">
+            <div>
+              <h3 className="font-bold text-sm text-[#292724]">Active Installation Dispatch Queue</h3>
+              <p className="text-[11px] text-slate-500">Orders ready for warehouse staging</p>
+            </div>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+              {projects.length} Orders
+            </span>
           </div>
-        ) : (
-          dispatchProjects.map((proj) => {
-            const pid = proj.projectId || proj.id;
-            const serials = scannedSerials[pid] || [];
-            const hasInverter = serials.some(s => s.includes('INV'));
-            const isReady = proj.stage === 'Material Ready';
 
-            return (
-              <div
-                key={proj.id}
-                className="p-5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-4 hover:border-[#C66B45]/40 transition-colors"
-              >
-                {/* Order Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-[#C66B45] text-sm">{pid}</span>
-                      <span className="font-bold text-slate-900 text-sm">{proj.customerName}</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 border border-slate-200 text-slate-900">
-                        {proj.capacityKw} kW {proj.systemType}
-                      </span>
+          <div className="space-y-2.5">
+            {projects.map((proj) => {
+              const isSelected = selectedProjectId === proj.id;
+              const isDispatched = dispatchStatus[proj.id]?.dispatched;
+              const serialsCount = registeredSerials[proj.id]?.length || 0;
+
+              return (
+                <div
+                  key={proj.id}
+                  onClick={() => setSelectedProjectId(proj.id)}
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-slate-50 border-[#C66B45] shadow-xs'
+                      : 'bg-white border-[#E7E2D9] hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="font-mono font-bold text-xs text-[#292724]">{proj.id}</span>
+                      <h4 className="font-semibold text-xs text-slate-800 mt-0.5">{proj.customerName}</h4>
+                      <p className="text-[11px] text-slate-500">{proj.systemCapacityKw} kW Turnkey System</p>
                     </div>
-                    <p className="text-xs text-slate-600 mt-0.5">
-                      {proj.customerAddress} • {proj.customerPhone}
-                    </p>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                      isReady ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      isDispatched
+                        ? 'bg-slate-800 text-white'
+                        : serialsCount > 0
+                        ? 'bg-slate-200 text-slate-800'
+                        : 'bg-slate-100 text-slate-600'
                     }`}>
-                      {isReady ? '✔ Material Staged & Serialized' : 'Packing In Progress'}
+                      {isDispatched ? 'Dispatched' : serialsCount > 0 ? `${serialsCount} Serials Entered` : 'Pending Entry'}
                     </span>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
 
-                {/* Packing Specs & Serial Numbers */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                  {/* Bill of Materials Box */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
-                    <span className="font-semibold text-slate-900 text-[11px] block">
-                      Required Hardware Staging:
-                    </span>
-                    <div className="space-y-1 text-[11px] text-slate-700">
-                      <div>• Mono-PERC 545W Panels ({Math.round(proj.capacityKw * 2)} Units)</div>
-                      <div>• {proj.capacityKw} kW MPPT Inverter (1 Unit)</div>
-                      {proj.systemType !== 'On-grid' && (
-                        <div>• LiFePO4 Solar Battery Bank (1 Set)</div>
-                      )}
-                      <div>• Aluminum Mounting Legs & Earthing Chemical</div>
-                    </div>
-                  </div>
+        {/* Right: Manual Serial Entry & Staging Details */}
+        <div className="lg:col-span-7 bg-white p-5 rounded-xl border border-[#E7E2D9] shadow-xs space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E7E2D9]">
+            <div>
+              <span className="font-mono font-bold text-xs text-[#C66B45]">{activeProject.id}</span>
+              <h3 className="font-bold text-base text-[#292724] mt-0.5">{activeProject.customerName}</h3>
+              <p className="text-[11px] text-slate-500">Destination: {activeProject.address || 'Pune Site'}, Maharashtra</p>
+            </div>
 
-                  {/* Scanned Serials Section */}
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5 md:col-span-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-900 text-[11px]">
-                        Scanned Equipment Serial Numbers:
-                      </span>
+            {dispatchStatus[activeProject.id]?.dispatched ? (
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-white">
+                ✔ Dispatched & En Route
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                Awaiting Serial Entry & Dispatch
+              </span>
+            )}
+          </div>
+
+          {/* Manual Serial Number Entry Field */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-xs text-[#292724]">Manual Equipment Serial Number Registration</h4>
+                <p className="text-[11px] text-slate-500">
+                  Enter hardware serial numbers directly from equipment labels (no barcode scanner required).
+                </p>
+              </div>
+              <KeyRound className="w-4 h-4 text-[#C66B45]" />
+            </div>
+
+            {/* Input & Add Row */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={manualSerialInput}
+                onChange={(e) => setManualSerialInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddManualSerial(); }}
+                placeholder="Enter serial number (e.g. INV-GW-5000-8831)"
+                className="flex-1 px-3 py-2 rounded-lg border border-[#E7E2D9] bg-white text-xs font-mono text-[#292724] focus:outline-none focus:border-[#C66B45] focus:ring-1 focus:ring-[#C66B45]"
+              />
+              <button
+                type="button"
+                onClick={() => handleAddManualSerial()}
+                className="px-4 py-2 rounded-lg bg-[#C66B45] hover:bg-[#C66B45]/90 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Register Serial</span>
+              </button>
+            </div>
+
+            {/* Quick Test Serial Presets */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
+              <span className="text-slate-500">Quick Entry Presets:</span>
+              <button
+                type="button"
+                onClick={() => handleAddManualSerial('INV-GW-5000-8831')}
+                className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 font-mono text-[10px]"
+              >
+                + Inverter: INV-GW-5000-8831
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAddManualSerial('BAT-PY-48100-2401')}
+                className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 font-mono text-[10px]"
+              >
+                + Battery: BAT-PY-48100-2401
+              </button>
+            </div>
+
+            {/* Registered Serials List */}
+            <div className="pt-2">
+              <span className="text-[11px] font-semibold text-slate-700 block mb-1.5">
+                Registered Serials for Order ({registeredSerials[activeProject.id]?.length || 0}):
+              </span>
+              {(registeredSerials[activeProject.id]?.length || 0) === 0 ? (
+                <div className="p-3 rounded-lg bg-white border border-dashed border-slate-300 text-center text-[11px] text-slate-500">
+                  No serial numbers entered yet. Enter the inverter serial above to unlock departure authorization.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {registeredSerials[activeProject.id].map((s) => (
+                    <div
+                      key={s}
+                      className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#292724]" />
+                        <span className="font-mono font-bold text-slate-800">{s}</span>
+                        <span className="text-[10px] text-slate-400">
+                          ({s.includes('INV') ? 'Solar Inverter' : s.includes('BAT') ? 'Storage Battery' : 'PV Module'})
+                        </span>
+                      </div>
                       <button
-                        onClick={() => {
-                          setTargetProject(proj);
-                          setIsScannerOpen(true);
-                        }}
-                        className="text-[10px] font-bold text-[#C66B45] hover:underline flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleRemoveSerial(s)}
+                        className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"
+                        title="Remove serial"
                       >
-                        <Scan className="w-3 h-3" />
-                        <span>Serial Number Scan</span>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {serials.length === 0 ? (
-                        <div className="text-[11px] text-amber-800 italic flex items-center gap-1.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>No serial numbers scanned yet. Please scan the Inverter serial number to verify equipment.</span>
-                        </div>
-                      ) : (
-                        serials.map((s) => (
-                          <span
-                            key={s}
-                            className="px-2.5 py-1 rounded bg-white border border-slate-200 font-mono text-[11px] font-bold text-slate-900 flex items-center gap-1.5 shadow-2xs"
-                          >
-                            <QrCode className="w-3 h-3 text-[#C66B45]" />
-                            {s}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
+              )}
+            </div>
+          </div>
 
-                {/* Footer Actions */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                  <div className="text-[11px]">
-                    {hasInverter ? (
-                      <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        Inverter serial confirmed. Ready for truck departure.
-                      </span>
-                    ) : (
-                      <span className="text-amber-700 font-semibold flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                        Inverter serial scan required by quality protocol.
-                      </span>
-                    )}
-                  </div>
+          {/* Truck Logistics Info */}
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-white border border-[#E7E2D9]">
+              <span className="text-[10px] text-slate-500 block">Assigned Transport Vehicle</span>
+              <p className="font-mono font-bold text-sm text-[#292724] mt-0.5">
+                {dispatchStatus[activeProject.id]?.truckNo || 'MH-12-RN-8831'}
+              </p>
+              <span className="text-[10px] text-slate-400">Eicher 14ft Flatbed Truck</span>
+            </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setTargetProject(proj);
-                        setIsScannerOpen(true);
-                      }}
-                      className="px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-900 flex items-center gap-1.5 transition-colors"
-                    >
-                      <Scan className="w-3.5 h-3.5 text-[#C66B45]" />
-                      <span>Scan Serial Number</span>
-                    </button>
+            <div className="p-3 rounded-xl bg-white border border-[#E7E2D9]">
+              <span className="text-[10px] text-slate-500 block">Lead Dispatch Driver</span>
+              <p className="font-semibold text-sm text-[#292724] mt-0.5">
+                {dispatchStatus[activeProject.id]?.driverName || 'Ramesh Patil'}
+              </p>
+              <span className="text-[10px] text-slate-400">Contact: +91 98230 44912</span>
+            </div>
+          </div>
 
-                    <button
-                      onClick={() => handleAuthorizeDispatch(proj)}
-                      className="px-4 py-1.5 rounded-lg bg-[#C66B45] text-white text-xs font-bold hover:bg-[#C66B45]/90 transition-colors shadow-xs flex items-center gap-1.5"
-                    >
-                      <Truck className="w-3.5 h-3.5" />
-                      <span>Authorize Departure & Start Warranty</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
+          {/* Action Row: Authorize Truck Departure */}
+          <div className="pt-2 border-t border-[#E7E2D9] flex items-center justify-between gap-4">
+            <div className="text-[11px] text-slate-500">
+              {dispatchStatus[activeProject.id]?.dispatched ? (
+                <span className="text-slate-800 font-medium">
+                  Departure logged at {dispatchStatus[activeProject.id]?.time}. 2-Year warranty clock active.
+                </span>
+              ) : (
+                <span>
+                  Authorizing departure initiates the 2-year warranty clock for all registered equipment.
+                </span>
+              )}
+            </div>
+
+            {!dispatchStatus[activeProject.id]?.dispatched ? (
+              <button
+                type="button"
+                onClick={handleAuthorizeDeparture}
+                className="px-5 py-2.5 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-md shadow-[#C66B45]/20 flex items-center gap-2 transition-all shrink-0"
+              >
+                <Truck className="w-4 h-4" />
+                <span>Authorize Truck Departure</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigateTab('warranties')}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                <span>View Registered Warranties</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Serial Number Scan Modal */}
-      <SerialNumberScanModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onScan={handleScanSerial}
-        targetItemName={targetProject ? `${targetProject.customerName} (${targetProject.projectId})` : 'Warehouse Box'}
-        expectedCategory="Inverters"
-      />
     </div>
   );
 };

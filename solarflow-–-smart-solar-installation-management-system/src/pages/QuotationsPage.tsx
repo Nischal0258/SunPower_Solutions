@@ -27,11 +27,13 @@ import { NavTab } from '../components/layout/Sidebar';
 interface QuotationsPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
   initialQuotationId?: string;
+  currentRole?: UserRole;
 }
 
 export const QuotationsPage: React.FC<QuotationsPageProps> = ({
   onNavigateTab,
-  initialQuotationId
+  initialQuotationId,
+  currentRole = "manager"
 }) => {
   const { showToast } = useToast();
   const [quotations, setQuotations] = useState<Quotation[]>(DataService.getQuotations());
@@ -408,6 +410,15 @@ export const QuotationsPage: React.FC<QuotationsPageProps> = ({
                         >
                           View & Print
                         </button>
+                        {quote.status !== 'Approved' && (
+                          <button
+                            onClick={() => handleUpdateStatus(quote.id, 'Approved')}
+                            className="px-2.5 py-1 text-[11px] font-semibold bg-[#292724] hover:bg-slate-800 text-white rounded transition-colors shadow-2xs"
+                            title="Manager: Approve quotation & BOM"
+                          >
+                            Approve
+                          </button>
+                        )}
                         {quote.status !== 'Approved' && (
                           <button
                             onClick={() => handleOpenEdit(quote)}
