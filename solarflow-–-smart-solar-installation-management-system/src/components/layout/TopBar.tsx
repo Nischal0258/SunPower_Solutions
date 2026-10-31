@@ -4,11 +4,13 @@ import {
   Search,
   Bell,
   RefreshCw,
-  Check,
   Building2,
-  ExternalLink
+  ExternalLink,
+  ChevronDown,
+  User,
+  LogOut
 } from 'lucide-react';
-import { NavTab } from './Sidebar';
+import { NavTab, UserRole } from '../../types/roles';
 import { DataService } from '../../services/dataService';
 import { SystemNotification } from '../../types';
 
@@ -20,6 +22,8 @@ interface TopBarProps {
   onResetData: () => void;
   notifications: SystemNotification[];
   onRefreshNotifications: () => void;
+  currentRole?: UserRole;
+  onLogout?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -29,7 +33,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onNavigateTab,
   onResetData,
   notifications,
-  onRefreshNotifications
+  onRefreshNotifications,
+  onLogout
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -38,6 +43,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     dashboard: { title: 'Operations Dashboard', subtitle: 'Priority tasks and active installations' },
     customers: { title: 'Customer & Lead Ledger', subtitle: 'Manage solar enquiries, site details & history' },
     quotations: { title: 'Quotations & Bill of Materials', subtitle: 'On-grid, off-grid and hybrid solar proposals' },
+    warehouse: { title: 'Warehouse Dispatch & Logistics', subtitle: 'Order verification, inverter barcode scanning & warranty clock' },
     inventory: { title: 'Warehouse Inventory & Stock', subtitle: 'Panels, inverters, batteries and balance of system' },
     installations: { title: 'Installation Management', subtitle: 'Site surveys, execution phases and commissioning' },
     warranties: { title: 'Warranty & Serial Tracking', subtitle: '20-year panels and 2-year inverter/battery registry' },
@@ -46,7 +52,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     settings: { title: 'System Settings', subtitle: 'Company credentials, team roster and pricing defaults' }
   };
 
-  const currentInfo = titles[currentTab] || { title: 'SolarFlow', subtitle: 'Solar Management System' };
+  const currentInfo = titles[currentTab] || { title: 'SunPower', subtitle: 'Solar Management System' };
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleMarkAllRead = () => {
@@ -78,7 +84,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       </div>
 
-      {/* Right zone: Search, Notifications, User */}
+      {/* Right zone: Search, Notifications, Dr. Singhania Profile Dropdown */}
       <div className="flex items-center gap-2.5 shrink-0">
         {/* Global Search Button */}
         <button
@@ -113,7 +119,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-[#FFFFFF] border border-[#E7E2D9] shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-[#E7E2D9]">
+              <div className="px-4 py-2.5 border-b border-[#E7E2D9] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-[#292724]">System Alerts</span>
                   {unreadCount > 0 && (
@@ -172,7 +178,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           )}
         </div>
 
-        {/* User / Org Menu */}
+        {/* Dr. Singhania Profile Dropdown Menu */}
         <div className="relative">
           <button
             onClick={() => {
@@ -182,44 +188,82 @@ export const TopBar: React.FC<TopBarProps> = ({
             className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-[#E7E2D9] hover:bg-[#F5F3EF] text-left transition-colors"
           >
             <div className="w-7 h-7 rounded-md bg-[#292724] text-[#DBBA95] font-bold text-xs flex items-center justify-center">
-              SR
+              DS
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-xs font-semibold text-[#292724] leading-tight">Sunil Rao</p>
-              <p className="text-[10px] text-[#292724]/60 leading-tight">SolarFlow HQ</p>
+              <p className="text-xs font-semibold text-[#292724] leading-tight">Dr. Singhania</p>
+              <p className="text-[10px] text-[#292724]/60 leading-tight">Managing Director</p>
             </div>
+            <ChevronDown className="w-3.5 h-3.5 text-[#292724]/50 hidden sm:block" />
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#FFFFFF] border border-[#E7E2D9] shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-4 py-2 border-b border-[#E7E2D9]">
-                <p className="text-xs font-bold text-[#292724]">SolarFlow Technologies</p>
-                <p className="text-[11px] text-[#292724]/60">HQ: Pune & Bengaluru Units</p>
+            <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#FFFFFF] border border-[#E7E2D9] shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-4 py-2.5 border-b border-[#E7E2D9] bg-[#F5F3EF]/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#292724] text-[#DBBA95] font-bold text-xs flex items-center justify-center">
+                    DS
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#292724]">Dr. Singhania</p>
+                    <p className="text-[11px] text-[#292724]/65">d.singhania@sunpower.in</p>
+                  </div>
+                </div>
               </div>
 
               <div className="py-1">
+                {/* Profile Settings */}
                 <button
                   onClick={() => {
                     onNavigateTab('settings');
                     setShowUserMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-xs text-[#292724] hover:bg-[#F5F3EF] text-left flex items-center gap-2"
+                  className="w-full px-4 py-2 text-xs text-[#292724] hover:bg-[#F5F3EF] text-left flex items-center gap-2.5 transition-colors"
+                >
+                  <User className="w-4 h-4 text-[#C66B45]" />
+                  <span>Profile Settings</span>
+                </button>
+
+                {/* Company Credentials */}
+                <button
+                  onClick={() => {
+                    onNavigateTab('settings');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-xs text-[#292724] hover:bg-[#F5F3EF] text-left flex items-center gap-2.5 transition-colors"
                 >
                   <Building2 className="w-4 h-4 text-[#292724]/60" />
                   <span>Company Credentials</span>
                 </button>
 
+                {/* Reset Demo Data */}
                 <button
                   onClick={() => {
                     onResetData();
                     setShowUserMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-xs text-[#C66B45] hover:bg-[#C66B45]/10 text-left flex items-center gap-2 font-medium"
+                  className="w-full px-4 py-2 text-xs text-[#C66B45] hover:bg-[#C66B45]/10 text-left flex items-center gap-2.5 font-medium transition-colors"
                 >
                   <RefreshCw className="w-4 h-4 text-[#C66B45]" />
                   <span>Reset Demo Data</span>
                 </button>
               </div>
+
+              {/* Logout Button */}
+              {onLogout && (
+                <div className="pt-1 border-t border-[#E7E2D9]">
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onLogout();
+                    }}
+                    className="w-full px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 text-left flex items-center gap-2.5 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-600" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

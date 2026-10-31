@@ -82,26 +82,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   return (
     <div className="space-y-6 pb-12">
       {/* Top Welcome & Primary Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FFFFFF] p-5 sm:p-6 rounded-xl border border-[#E7E2D9] shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#D9A441]" />
-            <h2 className="text-xl font-bold text-[#292724] tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Good morning, Sunil
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-[#292724]/70 mt-1">
-            You have <strong className="text-[#292724] font-semibold">{tasks.filter(t => !t.completed).length} priority tasks</strong> scheduled today across 3 active installation sites.
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
+            You have <strong className="text-slate-900 font-semibold">{tasks.filter(t => !t.completed).length} priority tasks</strong> scheduled today across 3 active installation sites.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={onOpenNewProject}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C66B45] text-[#FFFFFF] text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm active:scale-[0.99] whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm active:scale-[0.99] whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
-            <span>+ New Project</span>
+            <span>New Project</span>
           </button>
         </div>
       </div>
@@ -111,23 +111,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         {/* Card 1: Active Projects */}
         <div
           onClick={() => onNavigateTab('installations')}
-          className="bg-[#FFFFFF] p-4 sm:p-5 rounded-xl border border-[#E7E2D9] hover:border-[#DBBA95] transition-all cursor-pointer group shadow-xs"
+          className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#292724]/70">Active Projects</span>
-            <div className="w-8 h-8 rounded-lg bg-[#DBBA95]/20 flex items-center justify-center text-[#292724]">
+            <span className="text-xs font-medium text-slate-600">Active Projects</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900">
               <Sun className="w-4 h-4 text-[#D9A441]" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-bold text-[#292724] font-mono tabular-nums">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">
               {activeProjectsCount}
             </span>
-            <span className="text-xs text-[#292724]/60 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
+            <span className="text-xs text-slate-500 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
               Manage <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-[#292724]/60">
+          <p className="mt-1 text-[11px] text-slate-500">
             {projects.filter(p => p.stage === 'Installation In Progress').length} in active field installation
           </p>
         </div>
@@ -135,23 +135,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         {/* Card 2: Pending Quotations */}
         <div
           onClick={() => onNavigateTab('quotations')}
-          className="bg-[#FFFFFF] p-4 sm:p-5 rounded-xl border border-[#E7E2D9] hover:border-[#DBBA95] transition-all cursor-pointer group shadow-xs"
+          className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#292724]/70">Pending Quotations</span>
-            <div className="w-8 h-8 rounded-lg bg-[#DBBA95]/20 flex items-center justify-center text-[#292724]">
-              <FileText className="w-4 h-4 text-[#292724]" />
+            <span className="text-xs font-medium text-slate-600">Pending Quotations</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900">
+              <FileText className="w-4 h-4 text-slate-900" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-bold text-[#292724] font-mono tabular-nums">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">
               {pendingQuotesCount}
             </span>
-            <span className="text-xs text-[#292724]/60 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
+            <span className="text-xs text-slate-500 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
               Review <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-[#292724]/60">
+          <p className="mt-1 text-[11px] text-slate-500">
             Awaiting client sign-off or survey
           </p>
         </div>
@@ -159,10 +159,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         {/* Card 3: Low Stock Items */}
         <div
           onClick={() => onNavigateTab('inventory')}
-          className="bg-[#FFFFFF] p-4 sm:p-5 rounded-xl border border-[#E7E2D9] hover:border-[#DBBA95] transition-all cursor-pointer group shadow-xs"
+          className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#292724]/70">Low Stock Items</span>
+            <span className="text-xs font-medium text-slate-600">Low Stock Items</span>
             <div className="w-8 h-8 rounded-lg bg-[#C66B45]/10 flex items-center justify-center text-[#C66B45]">
               <AlertTriangle className="w-4 h-4 text-[#C66B45]" />
             </div>
@@ -171,11 +171,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <span className="text-2xl sm:text-3xl font-bold text-[#C66B45] font-mono tabular-nums">
               {lowStockCount}
             </span>
-            <span className="text-xs text-[#292724]/60 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
+            <span className="text-xs text-slate-500 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
               Restock <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-[#292724]/60">
+          <p className="mt-1 text-[11px] text-slate-500">
             Below safety buffer threshold
           </p>
         </div>
@@ -183,23 +183,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         {/* Card 4: Open Service Tickets */}
         <div
           onClick={() => onNavigateTab('tickets')}
-          className="bg-[#FFFFFF] p-4 sm:p-5 rounded-xl border border-[#E7E2D9] hover:border-[#DBBA95] transition-all cursor-pointer group shadow-xs"
+          className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#292724]/70">Open Service Tickets</span>
-            <div className="w-8 h-8 rounded-lg bg-[#DBBA95]/20 flex items-center justify-center text-[#292724]">
+            <span className="text-xs font-medium text-slate-600">Open Service Tickets</span>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900">
               <LifeBuoy className="w-4 h-4 text-[#D9A441]" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-bold text-[#292724] font-mono tabular-nums">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">
               {openTicketsCount}
             </span>
-            <span className="text-xs text-[#292724]/60 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
+            <span className="text-xs text-slate-500 font-medium group-hover:text-[#C66B45] flex items-center gap-1 transition-colors">
               Dispatch <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-[#292724]/60">
+          <p className="mt-1 text-[11px] text-slate-500">
             1 urgent warranty repair assigned
           </p>
         </div>
@@ -208,14 +208,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* Grid: A. Today's Tasks & C. Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Section A: Today's Tasks (2 Columns on large screens) */}
-        <div className="lg:col-span-2 bg-[#FFFFFF] rounded-xl border border-[#E7E2D9] p-5 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E7E2D9]">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-[#C66B45]" />
-                <h3 className="text-sm font-bold text-[#292724] tracking-tight">Today's Tasks</h3>
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Today's Tasks</h3>
               </div>
-              <span className="text-xs font-mono text-[#292724]/60">
+              <span className="text-xs font-mono text-slate-500">
                 {tasks.filter(t => t.completed).length} of {tasks.length} Completed
               </span>
             </div>
@@ -226,8 +226,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   key={task.id}
                   className={`p-3.5 rounded-lg border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                     task.completed
-                      ? 'bg-[#F5F3EF]/60 border-[#E7E2D9] opacity-60'
-                      : 'bg-[#FFFFFF] border-[#E7E2D9] hover:border-[#DBBA95]'
+                      ? 'bg-slate-50/60 border-slate-200 opacity-60'
+                      : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-start gap-3 min-w-0">
@@ -235,8 +235,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                       onClick={() => handleToggleTask(task.id)}
                       className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
                         task.completed
-                          ? 'bg-[#292724] border-[#292724] text-[#FFFFFF]'
-                          : 'border-[#292724]/30 hover:border-[#C66B45]'
+                          ? 'bg-slate-900 border-slate-900 text-white'
+                          : 'border-slate-900/30 hover:border-[#C66B45]'
                       }`}
                       aria-label="Toggle task completion"
                     >
@@ -244,7 +244,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     </button>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-xs font-semibold ${task.completed ? 'line-through text-[#292724]/60' : 'text-[#292724]'}`}>
+                        <span className={`text-xs font-semibold ${task.completed ? 'line-through text-slate-500' : 'text-slate-900'}`}>
                           {task.title}
                         </span>
                         {task.priority === 'Urgent' && (
@@ -253,8 +253,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[#292724]/65 mt-0.5">
-                        {task.targetDescription} · <span className="font-mono text-[#DBBA95] font-medium">{task.dueDate}</span>
+                      <p className="text-[11px] text-slate-900/65 mt-0.5">
+                        {task.targetDescription} · <span className="font-mono text-amber-600 font-medium">{task.dueDate}</span>
                       </p>
                     </div>
                   </div>
@@ -262,7 +262,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                     <button
                       onClick={() => handleTaskAction(task)}
-                      className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-[#F5F3EF] hover:bg-[#E7E2D9] text-[#292724] border border-[#E7E2D9] transition-colors"
+                      className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-slate-50 hover:bg-slate-200 text-slate-900 border border-slate-200 transition-colors"
                     >
                       Take Action
                     </button>
@@ -272,112 +272,112 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-[#E7E2D9] flex items-center justify-between text-xs text-[#292724]/70">
+          <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
             <span>Tasks update automatically based on survey dates, stock thresholds & customer approvals.</span>
           </div>
         </div>
 
         {/* Section C: Quick Actions */}
-        <div className="bg-[#FFFFFF] rounded-xl border border-[#E7E2D9] p-5 shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E7E2D9]">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-[#D9A441]" />
-                <h3 className="text-sm font-bold text-[#292724] tracking-tight">Quick Actions</h3>
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Quick Actions</h3>
               </div>
-              <span className="text-[11px] text-[#292724]/50">Common Workflows</span>
+              <span className="text-[11px] text-slate-400">Common Workflows</span>
             </div>
 
             <div className="grid grid-cols-1 gap-2.5">
               <button
                 onClick={onOpenNewCustomer}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] hover:bg-[#F5F3EF] text-left transition-all group"
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-md bg-[#F5F3EF] flex items-center justify-center text-[#292724] group-hover:bg-[#C66B45] group-hover:text-[#FFFFFF] transition-colors">
+                  <div className="w-7 h-7 rounded-md bg-slate-50 flex items-center justify-center text-slate-900 group-hover:bg-[#C66B45] group-hover:text-white transition-colors">
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-[#292724] block">Add Customer</span>
-                    <span className="text-[11px] text-[#292724]/60">Record lead & site details</span>
+                    <span className="text-xs font-semibold text-slate-900 block">Add Customer</span>
+                    <span className="text-[11px] text-slate-500">Record lead & site details</span>
                   </div>
                 </div>
-                <Plus className="w-4 h-4 text-[#292724]/40 group-hover:text-[#292724]" />
+                <Plus className="w-4 h-4 text-slate-900/40 group-hover:text-slate-900" />
               </button>
 
               <button
                 onClick={onOpenNewQuotation}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] hover:bg-[#F5F3EF] text-left transition-all group"
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-md bg-[#F5F3EF] flex items-center justify-center text-[#292724] group-hover:bg-[#C66B45] group-hover:text-[#FFFFFF] transition-colors">
+                  <div className="w-7 h-7 rounded-md bg-slate-50 flex items-center justify-center text-slate-900 group-hover:bg-[#C66B45] group-hover:text-white transition-colors">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-[#292724] block">Create Quotation</span>
-                    <span className="text-[11px] text-[#292724]/60">Generate BOM & price quote</span>
+                    <span className="text-xs font-semibold text-slate-900 block">Create Quotation</span>
+                    <span className="text-[11px] text-slate-500">Generate BOM & price quote</span>
                   </div>
                 </div>
-                <Plus className="w-4 h-4 text-[#292724]/40 group-hover:text-[#292724]" />
+                <Plus className="w-4 h-4 text-slate-900/40 group-hover:text-slate-900" />
               </button>
 
               <button
                 onClick={onOpenNewInventory}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] hover:bg-[#F5F3EF] text-left transition-all group"
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-md bg-[#F5F3EF] flex items-center justify-center text-[#292724] group-hover:bg-[#C66B45] group-hover:text-[#FFFFFF] transition-colors">
+                  <div className="w-7 h-7 rounded-md bg-slate-50 flex items-center justify-center text-slate-900 group-hover:bg-[#C66B45] group-hover:text-white transition-colors">
                     <Package className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-[#292724] block">Add Inventory Item</span>
-                    <span className="text-[11px] text-[#292724]/60">Register panels, inverters or BOS</span>
+                    <span className="text-xs font-semibold text-slate-900 block">Add Inventory Item</span>
+                    <span className="text-[11px] text-slate-500">Register panels, inverters or BOS</span>
                   </div>
                 </div>
-                <Plus className="w-4 h-4 text-[#292724]/40 group-hover:text-[#292724]" />
+                <Plus className="w-4 h-4 text-slate-900/40 group-hover:text-slate-900" />
               </button>
 
               <button
                 onClick={onOpenNewProject}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] hover:bg-[#F5F3EF] text-left transition-all group"
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-md bg-[#F5F3EF] flex items-center justify-center text-[#292724] group-hover:bg-[#C66B45] group-hover:text-[#FFFFFF] transition-colors">
+                  <div className="w-7 h-7 rounded-md bg-slate-50 flex items-center justify-center text-slate-900 group-hover:bg-[#C66B45] group-hover:text-white transition-colors">
                     <Sun className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-[#292724] block">Schedule Installation</span>
-                    <span className="text-[11px] text-[#292724]/60">Assign crew & survey dates</span>
+                    <span className="text-xs font-semibold text-slate-900 block">Schedule Installation</span>
+                    <span className="text-[11px] text-slate-500">Assign crew & survey dates</span>
                   </div>
                 </div>
-                <Plus className="w-4 h-4 text-[#292724]/40 group-hover:text-[#292724]" />
+                <Plus className="w-4 h-4 text-slate-900/40 group-hover:text-slate-900" />
               </button>
 
               <button
                 onClick={onOpenNewTicket}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] hover:bg-[#F5F3EF] text-left transition-all group"
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-md bg-[#F5F3EF] flex items-center justify-center text-[#292724] group-hover:bg-[#C66B45] group-hover:text-[#FFFFFF] transition-colors">
+                  <div className="w-7 h-7 rounded-md bg-slate-50 flex items-center justify-center text-slate-900 group-hover:bg-[#C66B45] group-hover:text-white transition-colors">
                     <LifeBuoy className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-[#292724] block">Create Service Ticket</span>
-                    <span className="text-[11px] text-[#292724]/60">Log customer fault or claim</span>
+                    <span className="text-xs font-semibold text-slate-900 block">Create Service Ticket</span>
+                    <span className="text-[11px] text-slate-500">Log customer fault or claim</span>
                   </div>
                 </div>
-                <Plus className="w-4 h-4 text-[#292724]/40 group-hover:text-[#292724]" />
+                <Plus className="w-4 h-4 text-slate-900/40 group-hover:text-slate-900" />
               </button>
             </div>
           </div>
 
           {/* Minimalist Progress Indicator as requested */}
-          <div className="mt-4 pt-3 border-t border-[#E7E2D9]">
+          <div className="mt-4 pt-3 border-t border-slate-200">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-[#292724]/70 font-medium">Monthly Commissioning Target</span>
-              <span className="font-mono font-bold text-[#292724]">41 kW / 50 kW</span>
+              <span className="text-slate-600 font-medium">Monthly Commissioning Target</span>
+              <span className="font-mono font-bold text-slate-900">41 kW / 50 kW</span>
             </div>
-            <div className="w-full h-2 bg-[#E7E2D9] rounded-full mt-1.5 overflow-hidden">
+            <div className="w-full h-2 bg-slate-200 rounded-full mt-1.5 overflow-hidden">
               <div className="h-full bg-[#C66B45] rounded-full" style={{ width: '82%' }} />
             </div>
           </div>
@@ -387,11 +387,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* Grid: B. Recent Projects & D. Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Section B: Recent Projects (2 Columns) */}
-        <div className="lg:col-span-2 bg-[#FFFFFF] rounded-xl border border-[#E7E2D9] p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E7E2D9]">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2">
               <Sun className="w-4 h-4 text-[#D9A441]" />
-              <h3 className="text-sm font-bold text-[#292724] tracking-tight">Recent Projects</h3>
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight">Recent Projects</h3>
             </div>
             <button
               onClick={() => onNavigateTab('installations')}
@@ -405,7 +405,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[#E7E2D9] text-[#292724]/60 font-semibold">
+                <tr className="border-b border-slate-200 text-slate-500 font-semibold">
                   <th className="pb-2.5 font-medium">Project ID</th>
                   <th className="pb-2.5 font-medium">Customer</th>
                   <th className="pb-2.5 font-medium">System Capacity</th>
@@ -414,27 +414,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <th className="pb-2.5 text-right font-medium">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E7E2D9]">
+              <tbody className="divide-y divide-slate-200">
                 {projects.slice(0, 4).map((p) => (
-                  <tr key={p.id} className="hover:bg-[#F5F3EF]/60 transition-colors">
-                    <td className="py-3 font-mono font-bold text-[#292724]">{p.projectId}</td>
-                    <td className="py-3 font-medium text-[#292724]">
+                  <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3 font-mono font-bold text-slate-900">{p.projectId}</td>
+                    <td className="py-3 font-medium text-slate-900">
                       <div>{p.customerName}</div>
-                      <div className="text-[11px] text-[#292724]/60">{p.customerAddress.split(',')[1] || p.customerAddress.split(',')[0]}</div>
+                      <div className="text-[11px] text-slate-500">{p.customerAddress.split(',')[1] || p.customerAddress.split(',')[0]}</div>
                     </td>
-                    <td className="py-3 font-mono text-[#292724]">
-                      {p.capacityKw} kW <span className="text-[#292724]/60">({p.systemType})</span>
+                    <td className="py-3 font-mono text-slate-900">
+                      {p.capacityKw} kW <span className="text-slate-500">({p.systemType})</span>
                     </td>
                     <td className="py-3">
                       <StatusBadge status={p.stage} type="stage" />
                     </td>
-                    <td className="py-3 text-[#292724]/80">
+                    <td className="py-3 text-slate-700">
                       {p.technicianName || 'Unassigned'}
                     </td>
                     <td className="py-3 text-right">
                       <button
                         onClick={() => onNavigateTab('installations', p.id)}
-                        className="px-2.5 py-1 text-xs font-medium text-[#292724] bg-[#F5F3EF] hover:bg-[#E7E2D9] rounded border border-[#E7E2D9] transition-colors"
+                        className="px-2.5 py-1 text-xs font-medium text-slate-900 bg-slate-50 hover:bg-slate-200 rounded border border-slate-200 transition-colors"
                       >
                         View Details
                       </button>
@@ -447,23 +447,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
 
         {/* Section D: Recent Activity */}
-        <div className="bg-[#FFFFFF] rounded-xl border border-[#E7E2D9] p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E7E2D9]">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#292724]" />
-              <h3 className="text-sm font-bold text-[#292724] tracking-tight">Recent Activity</h3>
+              <Clock className="w-4 h-4 text-slate-900" />
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight">Recent Activity</h3>
             </div>
-            <span className="text-[11px] text-[#292724]/50">Audit Feed</span>
+            <span className="text-[11px] text-slate-400">Audit Feed</span>
           </div>
 
           <div className="space-y-4">
             {activities.slice(0, 5).map((act) => (
               <div key={act.id} className="flex items-start gap-3 text-xs">
-                <div className="w-2 h-2 rounded-full bg-[#DBBA95] mt-1.5 shrink-0" />
+                <div className="w-2 h-2 rounded-full bg-slate-200 mt-1.5 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-[#292724] tracking-tight">{act.title}</p>
-                  <p className="text-[11px] text-[#292724]/70 mt-0.5 line-clamp-2">{act.description}</p>
-                  <div className="mt-1 flex items-center gap-2 text-[10px] text-[#292724]/50 font-mono">
+                  <p className="font-semibold text-slate-900 tracking-tight">{act.title}</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">{act.description}</p>
+                  <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400 font-mono">
                     <span>{act.timestamp}</span>
                     <span>·</span>
                     <span>{act.actor}</span>

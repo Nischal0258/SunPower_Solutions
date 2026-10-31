@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
+  Compass,
+  Scan,
   Sun,
   Search,
   Plus,
@@ -22,15 +24,19 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { useToast } from '../components/common/Toast';
 import { NavTab } from '../components/layout/Sidebar';
+import { SiteSurveyModal, SiteSurveyData } from '../components/common/SiteSurveyModal';
+import { SerialNumberScanModal } from '../components/common/SerialNumberScanModal';
 
 interface InstallationsPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
   initialProjectId?: string;
+  onOpenSiteSurvey?: () => void;
 }
 
 export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   onNavigateTab,
-  initialProjectId
+  initialProjectId,
+  onOpenSiteSurvey
 }) => {
   const { showToast } = useToast();
   const [projects, setProjects] = useState<InstallationProject[]>(DataService.getProjects());
@@ -60,6 +66,37 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [signatoryName, setSignatoryName] = useState('');
+  const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+
+
+  const handleSaveSurvey = (survey: SiteSurveyData) => {
+    if (!activeProject) return;
+    const updated = DataService.saveProject({
+      id: activeProject.id,
+      surveyDate: new Date().toISOString().split('T')[0],
+      stage: survey.approved ? 'Survey Completed' : 'Survey Pending',
+      progressPercent: survey.approved ? Math.max(activeProject.progressPercent, 30) : activeProject.progressPercent,
+      approvalNotes: `Surveyor: ${survey.surveyorName} | Tilt: ${survey.roofTiltDeg}° | Azimuth: ${survey.roofDirection} | Earthing: ${survey.earthingResistanceOhms}Ω | ${survey.notes}`
+    });
+    if (updated) {
+      showToast(
+        survey.approved 
+          ? 'Site survey approved! Roof feasibility verified & Quotation unlocked.' 
+          : 'Site survey recorded (roof flagged pending adjustments).', 
+        survey.approved ? 'success' : 'info'
+      );
+      refreshList();
+    }
+  };
+
+  const handleScannedSerial = (code: string, category?: string) => {
+    setNewSerialValue(code);
+    if (category && (category === 'Inverters' || category === 'Batteries' || category === 'Solar Panels')) {
+      setNewSerialCategory(category as any);
+    }
+    showToast(`Serial number ${code} verified & bound to installation project!`, 'info');
+  };
 
   const refreshList = () => {
     const list = DataService.getProjects();
@@ -290,16 +327,16 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   return (
     <div className="space-y-5">
       {/* Search & Filter Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FFFFFF] p-4 rounded-xl border border-[#E7E2D9] shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center gap-2 flex-1 max-w-xl">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#292724]/50" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by project ID (PRJ-2026-...), customer or technician..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg text-xs bg-[#F5F3EF] border border-[#E7E2D9] text-[#292724] placeholder-[#292724]/50 focus:outline-none focus:border-[#DBBA95]"
+              className="w-full pl-9 pr-3 py-2 rounded-lg text-xs bg-slate-50 border border-slate-200 text-slate-900 placeholder-[#292724]/50 focus:outline-none focus:border-slate-300"
             />
           </div>
 
@@ -310,8 +347,8 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                 onClick={() => setSelectedStage(st)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all whitespace-nowrap ${
                   selectedStage === st
-                    ? 'bg-[#292724] text-[#FFFFFF] border-[#292724]'
-                    : 'bg-[#FFFFFF] text-[#292724]/70 border-[#E7E2D9] hover:border-[#DBBA95]'
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
                 {st}
@@ -320,24 +357,41 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            onNavigateTab('quotations');
-            showToast('Select any approved quotation to initiate a new installation project.', 'info');
-          }}
-          className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#C66B45] text-[#FFFFFF] text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Create from Quotation</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => {
+              if (onOpenSiteSurvey) {
+                onOpenSiteSurvey();
+              } else {
+                setIsSurveyModalOpen(true);
+              }
+            }}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-slate-100 text-slate-900 text-xs font-semibold hover:bg-slate-100 transition-all shadow-xs shrink-0"
+            title="Record rooftop azimuth, tilt, shading, and earthing test"
+          >
+            <Compass className="w-4 h-4 text-[#C66B45]" />
+            <span>Conduct Site Survey</span>
+          </button>
+
+          <button
+            onClick={() => {
+              onNavigateTab('quotations');
+              showToast('Select any approved quotation to initiate a new installation project.', 'info');
+            }}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create from Quotation</span>
+          </button>
+        </div>
       </div>
 
       {/* Projects Table */}
-      <div className="bg-[#FFFFFF] rounded-xl border border-[#E7E2D9] shadow-xs overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-[#F5F3EF] border-b border-[#E7E2D9] text-[#292724]/70 font-semibold">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
                 <th className="py-3 px-4">Project ID</th>
                 <th className="py-3 px-4">Customer & Location</th>
                 <th className="py-3 px-4">Capacity</th>
@@ -348,10 +402,10 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E7E2D9]">
+            <tbody className="divide-y divide-slate-200">
               {filteredProjects.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-xs text-[#292724]/60">
+                  <td colSpan={8} className="py-12 text-center text-xs text-slate-500">
                     No installation projects match this filter.
                   </td>
                 </tr>
@@ -360,23 +414,23 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   <tr
                     key={proj.id}
                     onClick={() => setActiveProject(proj)}
-                    className="hover:bg-[#F5F3EF]/50 transition-colors cursor-pointer group"
+                    className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
                   >
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#292724] group-hover:text-[#C66B45]">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 group-hover:text-[#C66B45]">
                       {proj.projectId}
                       {proj.quotationNumber && (
-                        <div className="text-[10px] text-[#292724]/50 font-normal">from {proj.quotationNumber}</div>
+                        <div className="text-[10px] text-slate-400 font-normal">from {proj.quotationNumber}</div>
                       )}
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-[#292724]">{proj.customerName}</div>
-                      <div className="text-[11px] text-[#292724]/60">{proj.customerAddress.split(',')[1] || proj.customerAddress}</div>
+                      <div className="font-semibold text-slate-900">{proj.customerName}</div>
+                      <div className="text-[11px] text-slate-500">{proj.customerAddress.split(',')[1] || proj.customerAddress}</div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#292724]">
+                    <td className="py-3.5 px-4 font-mono text-slate-900">
                       <strong>{proj.capacityKw} kW</strong>
-                      <span className="text-[11px] text-[#292724]/60 ml-1">({proj.systemType})</span>
+                      <span className="text-[11px] text-slate-500 ml-1">({proj.systemType})</span>
                     </td>
-                    <td className="py-3.5 px-4 text-[#292724]">
+                    <td className="py-3.5 px-4 text-slate-900">
                       {proj.technicianName ? (
                         <div className="flex items-center gap-1.5">
                           <UserCheck className="w-3.5 h-3.5 text-[#D9A441]" />
@@ -391,18 +445,18 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-[#E7E2D9] rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-[#C66B45] rounded-full transition-all"
                             style={{ width: `${proj.progressPercent}%` }}
                           />
                         </div>
-                        <span className="font-mono text-[11px] font-bold text-[#292724]">
+                        <span className="font-mono text-[11px] font-bold text-slate-900">
                           {proj.progressPercent}%
                         </span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-[#292724]/70">
+                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600">
                       <div>Survey: {proj.surveyDate || 'TBD'}</div>
                       <div>Install: {proj.installationDate || 'TBD'}</div>
                     </td>
@@ -412,7 +466,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                           e.stopPropagation();
                           setActiveProject(proj);
                         }}
-                        className="px-2.5 py-1 text-[11px] font-semibold bg-[#F5F3EF] hover:bg-[#E7E2D9] text-[#292724] rounded border border-[#E7E2D9] transition-colors"
+                        className="px-2.5 py-1 text-[11px] font-semibold bg-slate-50 hover:bg-slate-200 text-slate-900 rounded border border-slate-200 transition-colors"
                       >
                         Manage Project
                       </button>
@@ -435,10 +489,33 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
           maxWidth="4xl"
         >
           <div className="space-y-6 text-xs">
-            {/* Stage Progression Bar */}
-            <div className="p-4 rounded-xl bg-[#F5F3EF] border border-[#E7E2D9] space-y-3">
+                        {/* Technical Feasibility Survey Callout Banner */}
+            <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[#C66B45] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Compass className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-xs">Technical Feasibility Site Survey</h4>
+                  <p className="text-[11px] text-slate-600">
+                    {activeProject.stage === 'Survey Completed'
+                      ? `Feasibility survey verified: ${activeProject.approvalNotes || 'Azimuth & Tilt cleared.'}`
+                      : 'Record rooftop azimuth, tilt angle, shadow analysis and earthing Ohms test.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSurveyModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 shrink-0 transition-colors shadow-xs"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>{activeProject.stage === 'Survey Completed' ? 'Review Survey Details' : 'Launch Site Survey'}</span>
+              </button>
+            </div>\n\n            {/* Stage Progression Bar */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-[#292724] text-xs">Workflow Milestones</span>
+                <span className="font-bold text-slate-900 text-xs">Workflow Milestones</span>
                 <span className="font-mono font-bold text-xs text-[#C66B45]">{activeProject.progressPercent}% Complete</span>
               </div>
 
@@ -461,10 +538,10 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                       onClick={() => handleStageAdvance(st as InstallationStage)}
                       className={`p-2 rounded-lg border text-left transition-all ${
                         isCurrent
-                          ? 'bg-[#C66B45] text-[#FFFFFF] border-[#C66B45] font-bold shadow-xs'
+                          ? 'bg-[#C66B45] text-white border-[#C66B45] font-bold shadow-xs'
                           : isPast
-                          ? 'bg-[#292724] text-[#FFFFFF] border-[#292724]'
-                          : 'bg-[#FFFFFF] text-[#292724]/60 border-[#E7E2D9] hover:border-[#DBBA95]'
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <div className="font-mono text-[9px] opacity-80">Stage 0{idx + 1}</div>
@@ -476,15 +553,15 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
             </div>
 
             {/* Crew & Schedule Controls */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-[#FFFFFF] border border-[#E7E2D9]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-white border border-slate-200">
               <div>
-                <label className="block font-semibold text-[#292724] mb-1">
+                <label className="block font-semibold text-slate-900 mb-1">
                   Assigned Lead Technician
                 </label>
                 <select
                   value={activeProject.technicianId || ''}
                   onChange={(e) => handleAssignTechnician(e.target.value)}
-                  className="w-full p-2 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] focus:outline-none focus:border-[#DBBA95]"
+                  className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-300"
                 >
                   <option value="">Select Technician...</option>
                   {TECHNICIANS.map(t => (
@@ -494,55 +571,55 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   ))}
                 </select>
                 {activeProject.technicianName && (
-                  <p className="text-[11px] text-[#292724]/60 mt-1">
+                  <p className="text-[11px] text-slate-500 mt-1">
                     Phone: {TECHNICIANS.find(t => t.id === activeProject.technicianId)?.phone}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block font-semibold text-[#292724] mb-1">
+                <label className="block font-semibold text-slate-900 mb-1">
                   Site Feasibility Survey Date
                 </label>
                 <input
                   type="date"
                   value={activeProject.surveyDate || ''}
                   onChange={(e) => handleUpdateSchedule(e.target.value, activeProject.installationDate || '')}
-                  className="w-full p-2 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] font-mono text-[#292724] focus:outline-none focus:border-[#DBBA95]"
+                  className="w-full p-2 rounded-lg border border-slate-200 bg-white font-mono text-slate-900 focus:outline-none focus:border-slate-300"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-[#292724] mb-1">
+                <label className="block font-semibold text-slate-900 mb-1">
                   Execution & Commissioning Date
                 </label>
                 <input
                   type="date"
                   value={activeProject.installationDate || ''}
                   onChange={(e) => handleUpdateSchedule(activeProject.surveyDate || '', e.target.value)}
-                  className="w-full p-2 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] font-mono text-[#292724] focus:outline-none focus:border-[#DBBA95]"
+                  className="w-full p-2 rounded-lg border border-slate-200 bg-white font-mono text-slate-900 focus:outline-none focus:border-slate-300"
                 />
               </div>
             </div>
 
             {/* Equipment Serials Recorder & Installed Hardware */}
-            <div className="border border-[#E7E2D9] rounded-xl p-4 bg-[#FFFFFF] space-y-3">
+            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-[#292724] text-xs">Installed Equipment & Serial Tracking</span>
-                  <p className="text-[11px] text-[#292724]/70">
+                  <span className="font-bold text-slate-900 text-xs">Installed Equipment & Serial Tracking</span>
+                  <p className="text-[11px] text-slate-600">
                     Serial numbers registered here automatically sync with the 20-Year (Panels) and 2-Year (Inverter/Battery) Warranty Registry.
                   </p>
                 </div>
-                <span className="px-2 py-0.5 rounded bg-[#DBBA95]/20 text-[#292724] font-semibold text-[10px]">
+                <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-900 font-semibold text-[10px]">
                   Automatic Warranty Sync
                 </span>
               </div>
 
               {/* Serial Entry Form */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 p-3 rounded-lg bg-[#F5F3EF] border border-[#E7E2D9]">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200">
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#292724] mb-1">Equipment Category</label>
+                  <label className="block text-[11px] font-semibold text-slate-900 mb-1">Equipment Category</label>
                   <select
                     value={newSerialCategory}
                     onChange={(e) => {
@@ -552,7 +629,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                       else if (cat === 'Inverters') setNewSerialProductName('Growatt / Deye Solar Inverter');
                       else setNewSerialProductName('Exide LiFePO4 Battery Bank');
                     }}
-                    className="w-full p-1.5 rounded border border-[#E7E2D9] bg-[#FFFFFF] text-[11px]"
+                    className="w-full p-1.5 rounded border border-slate-200 bg-white text-[11px]"
                   >
                     <option value="Solar Panels">Solar Panels (20 Yrs)</option>
                     <option value="Inverters">Inverters (2 Yrs)</option>
@@ -561,23 +638,33 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#292724] mb-1">Product Model / Label</label>
+                  <label className="block text-[11px] font-semibold text-slate-900 mb-1">Product Model / Label</label>
                   <input
                     type="text"
                     value={newSerialProductName}
                     onChange={(e) => setNewSerialProductName(e.target.value)}
-                    className="w-full p-1.5 rounded border border-[#E7E2D9] bg-[#FFFFFF] text-[11px]"
+                    className="w-full p-1.5 rounded border border-slate-200 bg-white text-[11px]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#292724] mb-1">Serial Number Code</label>
+                  <div className="flex items-center justify-between mb-1">
+  <label className="block text-[11px] font-semibold text-slate-900">Serial Number Code</label>
+  <button
+    type="button"
+    onClick={() => setIsScannerModalOpen(true)}
+    className="text-[10px] font-bold text-[#C66B45] hover:underline flex items-center gap-1"
+  >
+    <Scan className="w-3 h-3" />
+    <span>Serial Number Scan</span>
+  </button>
+</div>
                   <input
                     type="text"
                     value={newSerialValue}
                     onChange={(e) => setNewSerialValue(e.target.value)}
                     placeholder="e.g. SP-WAR-8841-2026"
-                    className="w-full p-1.5 rounded border border-[#E7E2D9] bg-[#FFFFFF] font-mono text-[11px]"
+                    className="w-full p-1.5 rounded border border-slate-200 bg-white font-mono text-[11px]"
                   />
                 </div>
 
@@ -585,7 +672,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   <button
                     type="button"
                     onClick={handleAddSerialNumber}
-                    className="w-full py-1.5 px-3 rounded bg-[#C66B45] text-[#FFFFFF] font-semibold hover:bg-[#C66B45]/90 text-[11px]"
+                    className="w-full py-1.5 px-3 rounded bg-[#C66B45] text-white font-semibold hover:bg-[#C66B45]/90 text-[11px]"
                   >
                     + Register Serial
                   </button>
@@ -595,29 +682,29 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
               {/* Display Installed equipment */}
               <div className="space-y-2">
                 {activeProject.installedProducts.length === 0 ? (
-                  <p className="text-xs text-[#292724]/60 italic p-3 bg-[#F5F3EF] rounded-lg">
+                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg">
                     No hardware serial numbers attached yet. Record serials during material dispatch or site mounting.
                   </p>
                 ) : (
                   activeProject.installedProducts.map(p => (
-                    <div key={p.id} className="p-3 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div key={p.id} className="p-3 rounded-lg border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#292724]">{p.productCategory}:</span>
+                          <span className="font-bold text-slate-900">{p.productCategory}:</span>
                           <span>{p.productName}</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-[#DBBA95]/30 font-semibold">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 font-semibold">
                             {p.warrantyYears} Years Warranty
                           </span>
                         </div>
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {p.serialNumbers.map(s => (
-                            <span key={s} className="px-2 py-0.5 rounded bg-[#F5F3EF] border border-[#E7E2D9] font-mono text-[11px] font-bold text-[#292724]">
+                            <span key={s} className="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 font-mono text-[11px] font-bold text-slate-900">
                               {s}
                             </span>
                           ))}
                         </div>
                       </div>
-                      <div className="text-[11px] text-[#292724]/60">
+                      <div className="text-[11px] text-slate-500">
                         Delivered: {p.deliveryDate}
                       </div>
                     </div>
@@ -627,20 +714,20 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
             </div>
 
             {/* Site Photographs & Gallery */}
-            <div className="border border-[#E7E2D9] rounded-xl p-4 bg-[#FFFFFF] space-y-3">
+            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-[#292724] text-xs">Site Installation Photographs ({activeProject.photos.length})</span>
-                  <p className="text-[11px] text-[#292724]/70">Visual evidence of mounting structures, DC cable dressing, inverter commissioning & net meter.</p>
+                  <span className="font-bold text-slate-900 text-xs">Site Installation Photographs ({activeProject.photos.length})</span>
+                  <p className="text-[11px] text-slate-600">Visual evidence of mounting structures, DC cable dressing, inverter commissioning & net meter.</p>
                 </div>
               </div>
 
               {/* Add Photo Form */}
-              <div className="flex flex-col sm:flex-row gap-2 p-3 rounded-lg bg-[#F5F3EF] border border-[#E7E2D9]">
+              <div className="flex flex-col sm:flex-row gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
                 <select
                   value={newPhotoPhase}
                   onChange={(e) => setNewPhotoPhase(e.target.value as any)}
-                  className="p-1.5 rounded border border-[#E7E2D9] bg-[#FFFFFF] text-[11px]"
+                  className="p-1.5 rounded border border-slate-200 bg-white text-[11px]"
                 >
                   <option value="Survey">Site Survey Phase</option>
                   <option value="Mounting">Rooftop Mounting Phase</option>
@@ -653,13 +740,13 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   value={newPhotoCaption}
                   onChange={(e) => setNewPhotoCaption(e.target.value)}
                   placeholder="Enter photo description (e.g. 18x Monocrystalline Array with Lightning Arrestor)"
-                  className="flex-1 p-1.5 rounded border border-[#E7E2D9] bg-[#FFFFFF] text-[11px]"
+                  className="flex-1 p-1.5 rounded border border-slate-200 bg-white text-[11px]"
                 />
 
                 <button
                   type="button"
                   onClick={handleAddPhoto}
-                  className="px-4 py-1.5 rounded bg-[#292724] text-[#FFFFFF] font-semibold text-[11px] flex items-center justify-center gap-1.5"
+                  className="px-4 py-1.5 rounded bg-slate-900 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5"
                 >
                   <Camera className="w-3.5 h-3.5" />
                   <span>Attach Site Photo</span>
@@ -669,21 +756,21 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
               {/* Photo Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {activeProject.photos.map(photo => (
-                  <div key={photo.id} className="rounded-xl border border-[#E7E2D9] overflow-hidden bg-[#F5F3EF]">
-                    <div className="relative aspect-video bg-[#292724] overflow-hidden">
+                  <div key={photo.id} className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+                    <div className="relative aspect-video bg-slate-900 overflow-hidden">
                       <img
                         src={photo.url}
                         alt={photo.caption}
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover"
                       />
-                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#292724]/80 text-[#FFFFFF] backdrop-blur-xs">
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-900/80 text-white backdrop-blur-xs">
                         {photo.phase} Phase
                       </span>
                     </div>
                     <div className="p-3">
-                      <p className="font-semibold text-[#292724] text-xs">{photo.caption}</p>
-                      <p className="text-[10px] text-[#292724]/50 font-mono mt-0.5">
+                      <p className="font-semibold text-slate-900 text-xs">{photo.caption}</p>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                         Logged on {new Date(photo.uploadedAt).toLocaleDateString()} by Field Crew
                       </p>
                     </div>
@@ -693,30 +780,30 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
             </div>
 
             {/* Customer Handover Approval & Signature Capture */}
-            <div className="border border-[#E7E2D9] rounded-xl p-4 bg-[#FFFFFF] space-y-4">
+            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-[#292724] text-xs">Customer Handover & Digital Acceptance</span>
-                  <p className="text-[11px] text-[#292724]/70">Capture customer physical touch signature upon system live testing and generation verification.</p>
+                  <span className="font-bold text-slate-900 text-xs">Customer Handover & Digital Acceptance</span>
+                  <p className="text-[11px] text-slate-600">Capture customer physical touch signature upon system live testing and generation verification.</p>
                 </div>
                 {activeProject.customerApproved && (
-                  <span className="px-2.5 py-1 rounded-md bg-[#292724] text-[#FFFFFF] font-semibold text-xs flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#DBBA95]" />
+                  <span className="px-2.5 py-1 rounded-md bg-slate-900 text-white font-semibold text-xs flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
                     <span>Customer Approved & Signed</span>
                   </span>
                 )}
               </div>
 
               {activeProject.customerApproved ? (
-                <div className="p-4 rounded-xl bg-[#F5F3EF] border border-[#E7E2D9] space-y-2">
-                  <p className="font-bold text-sm text-[#292724]">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <p className="font-bold text-sm text-slate-900">
                     Handover Approved by: {activeProject.approvalSignature}
                   </p>
-                  <p className="text-xs text-[#292724]/70">
+                  <p className="text-xs text-slate-600">
                     Handover Date: {activeProject.approvalDate} · Generation tested and verified.
                   </p>
                   {activeProject.approvalNotes && (
-                    <p className="text-xs text-[#292724]/80 italic">
+                    <p className="text-xs text-slate-700 italic">
                       Remarks: "{activeProject.approvalNotes}"
                     </p>
                   )}
@@ -725,7 +812,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block font-semibold text-[#292724] mb-1">
+                      <label className="block font-semibold text-slate-900 mb-1">
                         Signatory Name / Representative
                       </label>
                       <input
@@ -733,7 +820,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                         value={signatoryName}
                         onChange={(e) => setSignatoryName(e.target.value)}
                         placeholder={`e.g. ${activeProject.customerName}`}
-                        className="w-full p-2 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] text-xs"
+                        className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-900 text-xs"
                       />
                     </div>
 
@@ -741,7 +828,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                       <button
                         type="button"
                         onClick={clearSignature}
-                        className="text-xs text-[#292724]/60 hover:text-[#292724] flex items-center gap-1 p-2"
+                        className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1 p-2"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         <span>Clear Pad</span>
@@ -750,7 +837,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   </div>
 
                   {/* Interactive Signature Canvas Pad */}
-                  <div className="border border-[#E7E2D9] rounded-xl bg-[#F5F3EF] p-2">
+                  <div className="border border-slate-200 rounded-xl bg-slate-50 p-2">
                     <canvas
                       ref={canvasRef}
                       width={650}
@@ -759,9 +846,9 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                       onMouseMove={draw}
                       onMouseUp={stopDrawing}
                       onMouseLeave={stopDrawing}
-                      className="w-full bg-[#FFFFFF] rounded-lg border border-[#E7E2D9] cursor-crosshair touch-none"
+                      className="w-full bg-white rounded-lg border border-slate-200 cursor-crosshair touch-none"
                     />
-                    <p className="text-[10px] text-[#292724]/50 text-center mt-1">
+                    <p className="text-[10px] text-slate-400 text-center mt-1">
                       Sign above using your finger, stylus or mouse
                     </p>
                   </div>
@@ -770,7 +857,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                     <button
                       type="button"
                       onClick={handleSaveApproval}
-                      className="px-5 py-2.5 rounded-lg bg-[#C66B45] text-[#FFFFFF] font-bold text-xs hover:bg-[#C66B45]/90 shadow-sm flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-lg bg-[#C66B45] text-white font-bold text-xs hover:bg-[#C66B45]/90 shadow-sm flex items-center gap-2"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       <span>Approve Handover & Mark Project Completed</span>
@@ -782,6 +869,26 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
           </div>
         </Modal>
       )}
+
+      {/* Technical Site Survey Gate Modal */}
+      {activeProject && (
+        <SiteSurveyModal
+          isOpen={isSurveyModalOpen}
+          onClose={() => setIsSurveyModalOpen(false)}
+          onSubmit={handleSaveSurvey}
+          customerName={activeProject.customerName}
+          address={activeProject.customerAddress}
+        />
+      )}
+
+      {/* Serial Number Scan Modal */}
+      <SerialNumberScanModal
+        isOpen={isScannerModalOpen}
+        onClose={() => setIsScannerModalOpen(false)}
+        onScan={handleScannedSerial}
+        targetItemName={newSerialProductName}
+        expectedCategory={newSerialCategory}
+      />
     </div>
   );
 };

@@ -13,8 +13,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
   // Pending / Survey / In Progress -> Amber gold accent
   // Draft / Contacted / New / Open -> Stone neutral
 
-  let bgClass = 'bg-[#F5F3EF] text-[#292724] border-[#E7E2D9]';
-  let dotClass = 'bg-[#292724]';
+  let bgClass = 'bg-slate-50 text-slate-900 border-slate-200';
+  let dotClass = 'bg-slate-900';
 
   const s = status.toLowerCase();
 
@@ -22,18 +22,18 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
     bgClass = 'bg-[#C66B45]/10 text-[#C66B45] border-[#C66B45]/30 font-semibold';
     dotClass = 'bg-[#C66B45]';
   } else if (s.includes('approved') || s.includes('completed') || s.includes('in stock') || s.includes('converted') || s.includes('active') || s.includes('closed')) {
-    bgClass = 'bg-[#292724] text-[#FFFFFF] border-[#292724]';
-    dotClass = 'bg-[#DBBA95]';
+    bgClass = 'bg-slate-900 text-white border-slate-900';
+    dotClass = 'bg-slate-200';
   } else if (s.includes('low stock') || s.includes('expiring soon') || s.includes('progress') || s.includes('high') || s.includes('scheduled')) {
-    bgClass = 'bg-[#D9A441]/15 text-[#292724] border-[#D9A441]/40 font-medium';
+    bgClass = 'bg-[#D9A441]/15 text-slate-900 border-[#D9A441]/40 font-medium';
     dotClass = 'bg-[#D9A441]';
   } else if (s.includes('sent') || s.includes('survey') || s.includes('assigned') || s.includes('medium')) {
-    bgClass = 'bg-[#DBBA95]/20 text-[#292724] border-[#DBBA95]/50';
-    dotClass = 'bg-[#DBBA95]';
+    bgClass = 'bg-slate-100 text-slate-900 border-slate-300/50';
+    dotClass = 'bg-slate-200';
   } else {
     // Draft, New, Contacted, Low, Material Ready, Open
-    bgClass = 'bg-[#FFFFFF] text-[#292724] border-[#E7E2D9]';
-    dotClass = 'bg-[#E7E2D9]';
+    bgClass = 'bg-white text-slate-900 border-slate-200';
+    dotClass = 'bg-slate-200';
   }
 
   return (

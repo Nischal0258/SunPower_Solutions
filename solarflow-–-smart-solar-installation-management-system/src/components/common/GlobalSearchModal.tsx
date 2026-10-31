@@ -69,33 +69,33 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div 
-        className="fixed inset-0 bg-[#292724]/60 transition-opacity"
+        className="fixed inset-0 bg-slate-900/60 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
       <div className="flex min-h-full items-start justify-center p-4 pt-16 sm:p-6 sm:pt-20">
-        <div className="relative w-full max-w-xl rounded-xl bg-[#FFFFFF] shadow-2xl border border-[#E7E2D9] overflow-hidden">
+        <div className="relative w-full max-w-xl rounded-xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
           {/* Search Input Bar */}
-          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[#E7E2D9] bg-[#F5F3EF]">
-            <Search className="w-5 h-5 text-[#292724]/60 shrink-0" />
+          <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 bg-slate-50">
+            <Search className="w-5 h-5 text-slate-500 shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search customers, project IDs, quotations, serials or inventory..."
-              className="flex-1 bg-transparent text-sm text-[#292724] placeholder-[#292724]/40 focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-slate-900 placeholder-[#292724]/40 focus:outline-none"
               autoFocus
             />
             {query && (
               <button 
                 onClick={() => setQuery('')}
-                className="p-1 text-[#292724]/50 hover:text-[#292724]"
+                className="p-1 text-slate-400 hover:text-slate-900"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
-            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-medium text-[#292724]/60 bg-[#E7E2D9] rounded">
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-500 bg-slate-200 rounded">
               ESC
             </kbd>
           </div>
@@ -103,18 +103,18 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           {/* Results list */}
           <div className="max-h-96 overflow-y-auto p-2">
             {!q ? (
-              <div className="py-8 text-center text-xs text-[#292724]/60">
+              <div className="py-8 text-center text-xs text-slate-500">
                 Type a name, phone number, project ID (e.g. PRJ-2026), quotation #, or product serial...
               </div>
             ) : totalResults === 0 ? (
-              <div className="py-8 text-center text-xs text-[#292724]/70">
+              <div className="py-8 text-center text-xs text-slate-600">
                 No matching records found for "{query}".
               </div>
             ) : (
               <div className="space-y-3">
                 {matchedCustomers.length > 0 && (
                   <div>
-                    <p className="px-2.5 py-1 text-[11px] font-semibold text-[#292724]/50 uppercase tracking-wider">Customers</p>
+                    <p className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Customers</p>
                     {matchedCustomers.map(c => (
                       <button
                         key={c.id}
@@ -122,16 +122,16 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                           onNavigate('customers', c.id);
                           onClose();
                         }}
-                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-[#F5F3EF] text-left transition-colors text-xs text-[#292724]"
+                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 text-left transition-colors text-xs text-slate-900"
                       >
                         <div className="flex items-center gap-2.5">
                           <Users className="w-4 h-4 text-[#C66B45]" />
                           <div>
                             <span className="font-semibold">{c.name}</span>
-                            <span className="text-[#292724]/60 ml-2">{c.phone} · {c.city}</span>
+                            <span className="text-slate-500 ml-2">{c.phone} · {c.city}</span>
                           </div>
                         </div>
-                        <span className="text-[11px] font-mono text-[#DBBA95] font-medium">{c.leadStatus}</span>
+                        <span className="text-[11px] font-mono text-amber-600 font-medium">{c.leadStatus}</span>
                       </button>
                     ))}
                   </div>
@@ -139,7 +139,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
                 {matchedProjects.length > 0 && (
                   <div>
-                    <p className="px-2.5 py-1 text-[11px] font-semibold text-[#292724]/50 uppercase tracking-wider">Projects</p>
+                    <p className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Projects</p>
                     {matchedProjects.map(p => (
                       <button
                         key={p.id}
@@ -147,16 +147,16 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                           onNavigate('installations', p.id);
                           onClose();
                         }}
-                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-[#F5F3EF] text-left transition-colors text-xs text-[#292724]"
+                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 text-left transition-colors text-xs text-slate-900"
                       >
                         <div className="flex items-center gap-2.5">
                           <Sun className="w-4 h-4 text-[#D9A441]" />
                           <div>
                             <span className="font-semibold">{p.projectId}</span>
-                            <span className="text-[#292724]/60 ml-2">{p.customerName} · {p.capacityKw} kW</span>
+                            <span className="text-slate-500 ml-2">{p.customerName} · {p.capacityKw} kW</span>
                           </div>
                         </div>
-                        <span className="text-[11px] font-mono bg-[#E7E2D9] px-2 py-0.5 rounded text-[#292724]">{p.stage}</span>
+                        <span className="text-[11px] font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-900">{p.stage}</span>
                       </button>
                     ))}
                   </div>
@@ -164,7 +164,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
                 {matchedQuotes.length > 0 && (
                   <div>
-                    <p className="px-2.5 py-1 text-[11px] font-semibold text-[#292724]/50 uppercase tracking-wider">Quotations</p>
+                    <p className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Quotations</p>
                     {matchedQuotes.map(qt => (
                       <button
                         key={qt.id}
@@ -172,13 +172,13 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                           onNavigate('quotations', qt.id);
                           onClose();
                         }}
-                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-[#F5F3EF] text-left transition-colors text-xs text-[#292724]"
+                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 text-left transition-colors text-xs text-slate-900"
                       >
                         <div className="flex items-center gap-2.5">
-                          <FileText className="w-4 h-4 text-[#292724]" />
+                          <FileText className="w-4 h-4 text-slate-900" />
                           <div>
                             <span className="font-semibold">{qt.quotationNumber}</span>
-                            <span className="text-[#292724]/60 ml-2">{qt.customerName} · ₹{qt.grandTotal.toLocaleString('en-IN')}</span>
+                            <span className="text-slate-500 ml-2">{qt.customerName} · ₹{qt.grandTotal.toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                         <span className="text-[11px] font-medium text-[#C66B45]">{qt.status}</span>
@@ -189,7 +189,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
                 {matchedInventory.length > 0 && (
                   <div>
-                    <p className="px-2.5 py-1 text-[11px] font-semibold text-[#292724]/50 uppercase tracking-wider">Inventory</p>
+                    <p className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Inventory</p>
                     {matchedInventory.map(item => (
                       <button
                         key={item.id}
@@ -197,16 +197,16 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                           onNavigate('inventory', item.id);
                           onClose();
                         }}
-                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-[#F5F3EF] text-left transition-colors text-xs text-[#292724]"
+                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 text-left transition-colors text-xs text-slate-900"
                       >
                         <div className="flex items-center gap-2.5">
-                          <Package className="w-4 h-4 text-[#DBBA95]" />
+                          <Package className="w-4 h-4 text-amber-600" />
                           <div>
                             <span className="font-semibold">{item.name}</span>
-                            <span className="text-[#292724]/60 ml-2">SKU: {item.sku}</span>
+                            <span className="text-slate-500 ml-2">SKU: {item.sku}</span>
                           </div>
                         </div>
-                        <span className="text-[11px] font-mono text-[#292724]">{item.quantity} {item.unit}</span>
+                        <span className="text-[11px] font-mono text-slate-900">{item.quantity} {item.unit}</span>
                       </button>
                     ))}
                   </div>
@@ -214,7 +214,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
                 {matchedWarranties.length > 0 && (
                   <div>
-                    <p className="px-2.5 py-1 text-[11px] font-semibold text-[#292724]/50 uppercase tracking-wider">Warranty Serials</p>
+                    <p className="px-2.5 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Warranty Serials</p>
                     {matchedWarranties.map(w => (
                       <button
                         key={w.id}
@@ -222,16 +222,16 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                           onNavigate('warranties', w.serialNumber);
                           onClose();
                         }}
-                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-[#F5F3EF] text-left transition-colors text-xs text-[#292724]"
+                        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 text-left transition-colors text-xs text-slate-900"
                       >
                         <div className="flex items-center gap-2.5">
-                          <ShieldCheck className="w-4 h-4 text-[#292724]" />
+                          <ShieldCheck className="w-4 h-4 text-slate-900" />
                           <div>
                             <span className="font-semibold font-mono">{w.serialNumber}</span>
-                            <span className="text-[#292724]/60 ml-2">{w.customerName} · {w.productName}</span>
+                            <span className="text-slate-500 ml-2">{w.customerName} · {w.productName}</span>
                           </div>
                         </div>
-                        <span className="text-[11px] text-[#292724] font-medium">{w.status}</span>
+                        <span className="text-[11px] text-slate-900 font-medium">{w.status}</span>
                       </button>
                     ))}
                   </div>

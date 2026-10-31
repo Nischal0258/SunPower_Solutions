@@ -14,7 +14,8 @@ import {
   Trash2,
   ExternalLink,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  ClipboardCheck
 } from 'lucide-react';
 import { DataService } from '../services/dataService';
 import { Customer, LeadStatus, Quotation, InstallationProject, ServiceTicket } from '../types';
@@ -26,11 +27,13 @@ import { NavTab } from '../components/layout/Sidebar';
 interface CustomersPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
   initialCustomerId?: string;
+  onOpenSiteSurvey?: () => void;
 }
 
 export const CustomersPage: React.FC<CustomersPageProps> = ({
   onNavigateTab,
-  initialCustomerId
+  initialCustomerId,
+  onOpenSiteSurvey
 }) => {
   const { showToast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>(DataService.getCustomers());
@@ -226,16 +229,16 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
   return (
     <div className="space-y-5">
       {/* Top action & Filter bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FFFFFF] p-4 rounded-xl border border-[#E7E2D9] shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center gap-2 flex-1 max-w-xl">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#292724]/50" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by customer name, phone, city or email..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg text-xs bg-[#F5F3EF] border border-[#E7E2D9] text-[#292724] placeholder-[#292724]/50 focus:outline-none focus:border-[#DBBA95]"
+              className="w-full pl-9 pr-3 py-2 rounded-lg text-xs bg-slate-50 border border-slate-200 text-slate-900 placeholder-[#292724]/50 focus:outline-none focus:border-slate-300"
             />
           </div>
 
@@ -246,8 +249,8 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 onClick={() => setSelectedStatus(st)}
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all whitespace-nowrap ${
                   selectedStatus === st
-                    ? 'bg-[#292724] text-[#FFFFFF] border-[#292724]'
-                    : 'bg-[#FFFFFF] text-[#292724]/70 border-[#E7E2D9] hover:border-[#DBBA95]'
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
                 {st}
@@ -256,21 +259,34 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#C66B45] text-[#FFFFFF] text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Add Customer</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {onOpenSiteSurvey && (
+            <button
+              onClick={onOpenSiteSurvey}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-slate-100 text-slate-900 text-xs font-semibold hover:bg-slate-100 transition-all shadow-xs shrink-0"
+              title="Launch technical rooftop feasibility survey form"
+            >
+              <ClipboardCheck className="w-4 h-4 text-[#C66B45]" />
+              <span>Conduct Site Survey</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Customer</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Table View */}
-      <div className="bg-[#FFFFFF] rounded-xl border border-[#E7E2D9] shadow-xs overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-[#F5F3EF] border-b border-[#E7E2D9] text-[#292724]/70 font-semibold">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
                 <th className="py-3 px-4">Customer Name</th>
                 <th className="py-3 px-4">Contact Info</th>
                 <th className="py-3 px-4">Location</th>
@@ -280,10 +296,10 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E7E2D9]">
+            <tbody className="divide-y divide-slate-200">
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-xs text-[#292724]/60">
+                  <td colSpan={7} className="py-12 text-center text-xs text-slate-500">
                     No customers found matching your filter criteria.
                   </td>
                 </tr>
@@ -292,51 +308,51 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                   <tr
                     key={cust.id}
                     onClick={() => setViewCustomer(cust)}
-                    className="hover:bg-[#F5F3EF]/50 transition-colors cursor-pointer group"
+                    className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
                   >
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#292724] text-xs group-hover:text-[#C66B45] transition-colors">
+                      <div className="font-bold text-slate-900 text-xs group-hover:text-[#C66B45] transition-colors">
                         {cust.name}
                       </div>
-                      <span className="text-[10px] font-mono text-[#292724]/50">{cust.id}</span>
+                      <span className="text-[10px] font-mono text-slate-400">{cust.id}</span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-1.5 text-[#292724]">
-                        <Phone className="w-3.5 h-3.5 text-[#DBBA95]" />
+                      <div className="flex items-center gap-1.5 text-slate-900">
+                        <Phone className="w-3.5 h-3.5 text-amber-600" />
                         <span className="font-mono">{cust.phone}</span>
                       </div>
                       {cust.email && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-[#292724]/60 mt-0.5">
-                          <Mail className="w-3.5 h-3.5 text-[#292724]/40" />
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
+                          <Mail className="w-3.5 h-3.5 text-slate-900/40" />
                           <span>{cust.email}</span>
                         </div>
                       )}
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="text-[#292724] font-medium">{cust.city}, {cust.state}</div>
-                      <div className="text-[11px] text-[#292724]/60 truncate max-w-[180px]">{cust.address}</div>
+                      <div className="text-slate-900 font-medium">{cust.city}, {cust.state}</div>
+                      <div className="text-[11px] text-slate-500 truncate max-w-[180px]">{cust.address}</div>
                     </td>
                     <td className="py-3.5 px-4">
                       <StatusBadge status={cust.leadStatus} type="lead" />
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#292724]">
+                    <td className="py-3.5 px-4 font-mono text-slate-900">
                       <div>{cust.sanctionLoadKw || 5} kW Sanctioned</div>
-                      <div className="text-[11px] text-[#292724]/60">{cust.roofAreaSqFt || 0} sq.ft roof</div>
+                      <div className="text-[11px] text-slate-500">{cust.roofAreaSqFt || 0} sq.ft roof</div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#292724]/70">
+                    <td className="py-3.5 px-4 font-mono text-slate-600">
                       {cust.enquiryDate}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => setViewCustomer(cust)}
-                          className="px-2.5 py-1 text-[11px] font-medium bg-[#F5F3EF] hover:bg-[#E7E2D9] text-[#292724] rounded border border-[#E7E2D9] transition-colors"
+                          className="px-2.5 py-1 text-[11px] font-medium bg-slate-50 hover:bg-slate-200 text-slate-900 rounded border border-slate-200 transition-colors"
                         >
                           Details
                         </button>
                         <button
                           onClick={(e) => handleOpenEdit(cust, e)}
-                          className="p-1 rounded text-[#292724]/60 hover:text-[#292724] hover:bg-[#E7E2D9] transition-colors"
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors"
                           title="Edit Customer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -369,20 +385,20 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
         >
           <div className="space-y-6">
             {/* Header strip */}
-            <div className="p-4 rounded-xl bg-[#F5F3EF] border border-[#E7E2D9] flex flex-wrap items-center justify-between gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-[#292724]">{viewCustomer.name}</span>
+                  <span className="text-base font-bold text-slate-900">{viewCustomer.name}</span>
                   <StatusBadge status={viewCustomer.leadStatus} type="lead" />
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-[#292724]/80">
+                <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-slate-700">
                   <span className="flex items-center gap-1">
                     <Phone className="w-3.5 h-3.5 text-[#C66B45]" />
                     <strong className="font-mono">{viewCustomer.phone}</strong>
                   </span>
                   {viewCustomer.email && (
                     <span className="flex items-center gap-1">
-                      <Mail className="w-3.5 h-3.5 text-[#292724]/60" />
+                      <Mail className="w-3.5 h-3.5 text-slate-500" />
                       <span>{viewCustomer.email}</span>
                     </span>
                   )}
@@ -396,7 +412,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleOpenEdit(viewCustomer)}
-                  className="px-3 py-1.5 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-xs font-semibold text-[#292724] hover:bg-[#E7E2D9] transition-colors"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-900 hover:bg-slate-200 transition-colors"
                 >
                   Edit Profile
                 </button>
@@ -405,7 +421,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                     setViewCustomer(null);
                     onNavigateTab('quotations');
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#C66B45] text-xs font-semibold text-[#FFFFFF] hover:bg-[#C66B45]/90 transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-[#C66B45] text-xs font-semibold text-white hover:bg-[#C66B45]/90 transition-colors"
                 >
                   + New Quote
                 </button>
@@ -414,29 +430,29 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
 
             {/* Site Specs & Notes */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-3 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF]">
-                <p className="text-[#292724]/60 font-medium">Sanctioned Electricity Load</p>
-                <p className="text-base font-bold text-[#292724] font-mono mt-1">{viewCustomer.sanctionLoadKw || 5} kW</p>
-                <p className="text-[10px] text-[#292724]/50">3-Phase DISCOM Connection</p>
+              <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                <p className="text-slate-500 font-medium">Sanctioned Electricity Load</p>
+                <p className="text-base font-bold text-slate-900 font-mono mt-1">{viewCustomer.sanctionLoadKw || 5} kW</p>
+                <p className="text-[10px] text-slate-400">3-Phase DISCOM Connection</p>
               </div>
 
-              <div className="p-3 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF]">
-                <p className="text-[#292724]/60 font-medium">Usable Rooftop Area</p>
-                <p className="text-base font-bold text-[#292724] font-mono mt-1">{viewCustomer.roofAreaSqFt || 0} sq.ft</p>
-                <p className="text-[10px] text-[#292724]/50">Estimated Solar Capacity: ~{Math.floor((viewCustomer.roofAreaSqFt || 1000) / 100)} kW</p>
+              <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                <p className="text-slate-500 font-medium">Usable Rooftop Area</p>
+                <p className="text-base font-bold text-slate-900 font-mono mt-1">{viewCustomer.roofAreaSqFt || 0} sq.ft</p>
+                <p className="text-[10px] text-slate-400">Estimated Solar Capacity: ~{Math.floor((viewCustomer.roofAreaSqFt || 1000) / 100)} kW</p>
               </div>
 
-              <div className="p-3 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF]">
-                <p className="text-[#292724]/60 font-medium">Enquiry Date</p>
-                <p className="text-base font-bold text-[#292724] font-mono mt-1">{viewCustomer.enquiryDate}</p>
-                <p className="text-[10px] text-[#292724]/50">SolarFlow Customer Record</p>
+              <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                <p className="text-slate-500 font-medium">Enquiry Date</p>
+                <p className="text-base font-bold text-slate-900 font-mono mt-1">{viewCustomer.enquiryDate}</p>
+                <p className="text-[10px] text-slate-400">SunPower Customer Record</p>
               </div>
             </div>
 
             {viewCustomer.notes && (
-              <div className="p-3 rounded-lg bg-[#F5F3EF]/60 border border-[#E7E2D9] text-xs">
-                <span className="font-semibold text-[#292724]">Site / Requirement Notes: </span>
-                <span className="text-[#292724]/80">{viewCustomer.notes}</span>
+              <div className="p-3 rounded-lg bg-slate-50/60 border border-slate-200 text-xs">
+                <span className="font-semibold text-slate-900">Site / Requirement Notes: </span>
+                <span className="text-slate-700">{viewCustomer.notes}</span>
               </div>
             )}
 
@@ -445,14 +461,14 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
               {/* Linked Quotations */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#292724]">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
                     <FileText className="w-4 h-4 text-[#C66B45]" />
                     <span>Quotations ({customerQuotes.length})</span>
                   </div>
                 </div>
 
                 {customerQuotes.length === 0 ? (
-                  <p className="text-xs text-[#292724]/60 italic p-3 bg-[#F5F3EF] rounded-lg border border-[#E7E2D9]">
+                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg border border-slate-200">
                     No quotations generated yet for this customer.
                   </p>
                 ) : (
@@ -464,21 +480,21 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                           setViewCustomer(null);
                           onNavigateTab('quotations', q.id);
                         }}
-                        className="p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] bg-[#FFFFFF] flex items-center justify-between cursor-pointer transition-all text-xs"
+                        className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-white flex items-center justify-between cursor-pointer transition-all text-xs"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold font-mono text-[#292724]">{q.quotationNumber}</span>
-                            <span className="text-[#292724]/60">·</span>
+                            <span className="font-bold font-mono text-slate-900">{q.quotationNumber}</span>
+                            <span className="text-slate-500">·</span>
                             <span className="font-semibold">{q.capacityKw} kW {q.systemType}</span>
                             <StatusBadge status={q.status} type="quote" />
                           </div>
-                          <p className="text-[11px] text-[#292724]/60 mt-0.5">
+                          <p className="text-[11px] text-slate-500 mt-0.5">
                             Created on {q.createdAt} · Valid until {q.validUntil}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold font-mono text-sm text-[#292724]">
+                          <p className="font-bold font-mono text-sm text-slate-900">
                             ₹{q.grandTotal.toLocaleString('en-IN')}
                           </p>
                           <span className="text-[10px] text-[#C66B45] font-semibold hover:underline flex items-center justify-end gap-0.5">
@@ -494,14 +510,14 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
               {/* Linked Projects */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#292724]">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
                     <Sun className="w-4 h-4 text-[#D9A441]" />
                     <span>Installation Projects ({customerProjects.length})</span>
                   </div>
                 </div>
 
                 {customerProjects.length === 0 ? (
-                  <p className="text-xs text-[#292724]/60 italic p-3 bg-[#F5F3EF] rounded-lg border border-[#E7E2D9]">
+                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg border border-slate-200">
                     No active installation project yet. (Approve a quotation to start a project).
                   </p>
                 ) : (
@@ -513,16 +529,16 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                           setViewCustomer(null);
                           onNavigateTab('installations', p.id);
                         }}
-                        className="p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] bg-[#FFFFFF] flex items-center justify-between cursor-pointer transition-all text-xs"
+                        className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-white flex items-center justify-between cursor-pointer transition-all text-xs"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold font-mono text-[#292724]">{p.projectId}</span>
-                            <span className="text-[#292724]/60">·</span>
+                            <span className="font-bold font-mono text-slate-900">{p.projectId}</span>
+                            <span className="text-slate-500">·</span>
                             <span>{p.capacityKw} kW {p.systemType}</span>
                             <StatusBadge status={p.stage} type="stage" />
                           </div>
-                          <p className="text-[11px] text-[#292724]/60 mt-0.5">
+                          <p className="text-[11px] text-slate-500 mt-0.5">
                             Assigned Tech: {p.technicianName || 'Pending'} · Progress: {p.progressPercent}%
                           </p>
                         </div>
@@ -538,14 +554,14 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
               {/* Linked Service Tickets */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#292724]">
-                    <LifeBuoy className="w-4 h-4 text-[#292724]" />
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                    <LifeBuoy className="w-4 h-4 text-slate-900" />
                     <span>Service History ({customerTickets.length})</span>
                   </div>
                 </div>
 
                 {customerTickets.length === 0 ? (
-                  <p className="text-xs text-[#292724]/60 italic p-3 bg-[#F5F3EF] rounded-lg border border-[#E7E2D9]">
+                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg border border-slate-200">
                     Zero service complaints recorded. System operating nominally.
                   </p>
                 ) : (
@@ -557,15 +573,15 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                           setViewCustomer(null);
                           onNavigateTab('tickets', t.id);
                         }}
-                        className="p-3 rounded-lg border border-[#E7E2D9] hover:border-[#DBBA95] bg-[#FFFFFF] flex items-center justify-between cursor-pointer transition-all text-xs"
+                        className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 bg-white flex items-center justify-between cursor-pointer transition-all text-xs"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold font-mono text-[#292724]">{t.ticketNumber}</span>
+                            <span className="font-bold font-mono text-slate-900">{t.ticketNumber}</span>
                             <StatusBadge status={t.status} type="ticket" />
                             <StatusBadge status={t.priority} type="priority" />
                           </div>
-                          <p className="text-[11px] text-[#292724]/75 mt-0.5">
+                          <p className="text-[11px] text-slate-600 mt-0.5">
                             {t.issueDescription}
                           </p>
                         </div>
@@ -600,7 +616,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Customer Full Name *
               </label>
               <input
@@ -608,15 +624,15 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Rameshwar Patil"
-                className={`w-full p-2.5 rounded-lg border bg-[#FFFFFF] text-[#292724] focus:outline-none ${
-                  formErrors.name ? 'border-[#C66B45]' : 'border-[#E7E2D9] focus:border-[#DBBA95]'
+                className={`w-full p-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none ${
+                  formErrors.name ? 'border-[#C66B45]' : 'border-slate-200 focus:border-slate-300'
                 }`}
               />
               {formErrors.name && <p className="text-[#C66B45] text-[11px] mt-1">{formErrors.name}</p>}
             </div>
 
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Indian Mobile Number *
               </label>
               <input
@@ -624,8 +640,8 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="e.g. +91 98201 54321"
-                className={`w-full p-2.5 rounded-lg border bg-[#FFFFFF] text-[#292724] font-mono focus:outline-none ${
-                  formErrors.phone ? 'border-[#C66B45]' : 'border-[#E7E2D9] focus:border-[#DBBA95]'
+                className={`w-full p-2.5 rounded-lg border bg-white text-slate-900 font-mono focus:outline-none ${
+                  formErrors.phone ? 'border-[#C66B45]' : 'border-slate-200 focus:border-slate-300'
                 }`}
               />
               {formErrors.phone && <p className="text-[#C66B45] text-[11px] mt-1">{formErrors.phone}</p>}
@@ -634,7 +650,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Email Address
               </label>
               <input
@@ -642,21 +658,21 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="e.g. customer@domain.com"
-                className={`w-full p-2.5 rounded-lg border bg-[#FFFFFF] text-[#292724] focus:outline-none ${
-                  formErrors.email ? 'border-[#C66B45]' : 'border-[#E7E2D9] focus:border-[#DBBA95]'
+                className={`w-full p-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none ${
+                  formErrors.email ? 'border-[#C66B45]' : 'border-slate-200 focus:border-slate-300'
                 }`}
               />
               {formErrors.email && <p className="text-[#C66B45] text-[11px] mt-1">{formErrors.email}</p>}
             </div>
 
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Lead Status
               </label>
               <select
                 value={formData.leadStatus}
                 onChange={(e) => setFormData({ ...formData, leadStatus: e.target.value as LeadStatus })}
-                className="w-full p-2.5 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] focus:outline-none focus:border-[#DBBA95]"
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-300"
               >
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
@@ -668,7 +684,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
           </div>
 
           <div>
-            <label className="block font-semibold text-[#292724] mb-1">
+            <label className="block font-semibold text-slate-900 mb-1">
               Premises / Site Address *
             </label>
             <input
@@ -676,8 +692,8 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="e.g. Bungalow 12, Gulmohar Enclave, Opp. Metro Pillar 42"
-              className={`w-full p-2.5 rounded-lg border bg-[#FFFFFF] text-[#292724] focus:outline-none ${
-                formErrors.address ? 'border-[#C66B45]' : 'border-[#E7E2D9] focus:border-[#DBBA95]'
+              className={`w-full p-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none ${
+                formErrors.address ? 'border-[#C66B45]' : 'border-slate-200 focus:border-slate-300'
               }`}
             />
             {formErrors.address && <p className="text-[#C66B45] text-[11px] mt-1">{formErrors.address}</p>}
@@ -685,7 +701,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 City *
               </label>
               <input
@@ -693,15 +709,15 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 placeholder="e.g. Pune"
-                className={`w-full p-2.5 rounded-lg border bg-[#FFFFFF] text-[#292724] focus:outline-none ${
-                  formErrors.city ? 'border-[#C66B45]' : 'border-[#E7E2D9] focus:border-[#DBBA95]'
+                className={`w-full p-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none ${
+                  formErrors.city ? 'border-[#C66B45]' : 'border-slate-200 focus:border-slate-300'
                 }`}
               />
               {formErrors.city && <p className="text-[#C66B45] text-[11px] mt-1">{formErrors.city}</p>}
             </div>
 
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 State *
               </label>
               <input
@@ -709,15 +725,15 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                 placeholder="e.g. Maharashtra"
-                className={`w-full p-2.5 rounded-lg border bg-[#FFFFFF] text-[#292724] focus:outline-none ${
-                  formErrors.state ? 'border-[#C66B45]' : 'border-[#E7E2D9] focus:border-[#DBBA95]'
+                className={`w-full p-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none ${
+                  formErrors.state ? 'border-[#C66B45]' : 'border-slate-200 focus:border-slate-300'
                 }`}
               />
               {formErrors.state && <p className="text-[#C66B45] text-[11px] mt-1">{formErrors.state}</p>}
             </div>
 
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Pincode
               </label>
               <input
@@ -725,51 +741,51 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 value={formData.pincode}
                 onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                 placeholder="e.g. 411038"
-                className="w-full p-2.5 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] font-mono focus:outline-none focus:border-[#DBBA95]"
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-slate-300"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Roof Area (Sq. Ft)
               </label>
               <input
                 type="number"
                 value={formData.roofAreaSqFt}
                 onChange={(e) => setFormData({ ...formData, roofAreaSqFt: Number(e.target.value) })}
-                className="w-full p-2.5 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] font-mono focus:outline-none focus:border-[#DBBA95]"
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-slate-300"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Sanctioned Load (kW)
               </label>
               <input
                 type="number"
                 value={formData.sanctionLoadKw}
                 onChange={(e) => setFormData({ ...formData, sanctionLoadKw: Number(e.target.value) })}
-                className="w-full p-2.5 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] font-mono focus:outline-none focus:border-[#DBBA95]"
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-slate-300"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-[#292724] mb-1">
+              <label className="block font-semibold text-slate-900 mb-1">
                 Enquiry Date
               </label>
               <input
                 type="date"
                 value={formData.enquiryDate}
                 onChange={(e) => setFormData({ ...formData, enquiryDate: e.target.value })}
-                className="w-full p-2.5 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] font-mono focus:outline-none focus:border-[#DBBA95]"
+                className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 font-mono focus:outline-none focus:border-slate-300"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-semibold text-[#292724] mb-1">
+            <label className="block font-semibold text-slate-900 mb-1">
               Notes & Special Instructions
             </label>
             <textarea
@@ -777,21 +793,21 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="e.g. Needs elevated structure to preserve terrace space. High night usage."
-              className="w-full p-2.5 rounded-lg border border-[#E7E2D9] bg-[#FFFFFF] text-[#292724] focus:outline-none focus:border-[#DBBA95]"
+              className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-300"
             />
           </div>
 
-          <div className="pt-3 border-t border-[#E7E2D9] flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setIsAddEditOpen(false)}
-              className="px-4 py-2 rounded-lg border border-[#E7E2D9] text-[#292724] font-medium hover:bg-[#F5F3EF]"
+              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-900 font-medium hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-[#C66B45] text-[#FFFFFF] font-semibold hover:bg-[#C66B45]/90 shadow-sm"
+              className="px-5 py-2 rounded-lg bg-[#C66B45] text-white font-semibold hover:bg-[#C66B45]/90 shadow-sm"
             >
               {editingCustomer ? 'Update Customer' : 'Save Customer Record'}
             </button>
@@ -808,7 +824,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
           maxWidth="sm"
         >
           <div className="space-y-4 text-xs">
-            <p className="text-[#292724]">
+            <p className="text-slate-900">
               Are you sure you want to permanently delete customer <strong>{deleteConfirmCust.name}</strong> ({deleteConfirmCust.id})?
             </p>
             <p className="text-[#C66B45] bg-[#C66B45]/10 p-2.5 rounded-lg border border-[#C66B45]/30">
@@ -818,13 +834,13 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setDeleteConfirmCust(null)}
-                className="px-3 py-1.5 rounded-lg border border-[#E7E2D9] text-[#292724] hover:bg-[#F5F3EF]"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-900 hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-1.5 rounded-lg bg-[#C66B45] text-[#FFFFFF] font-semibold hover:bg-[#C66B45]/90"
+                className="px-4 py-1.5 rounded-lg bg-[#C66B45] text-white font-semibold hover:bg-[#C66B45]/90"
               >
                 Confirm Delete
               </button>

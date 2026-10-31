@@ -12,13 +12,13 @@ import {
   SystemNotification
 } from '../types';
 
-const STORAGE_KEY = 'solarflow_app_data_v2';
+const STORAGE_KEY = 'sunpower_app_data_v2';
 
 export const TECHNICIANS: Technician[] = [
-  { id: 'TECH-01', name: 'Ramesh Kumar', phone: '+91 98230 44102', email: 'ramesh.k@solarflow.in', activeProjects: 2, certifications: 'MNRE Certified Solar Rooftop Installer Level 3' },
-  { id: 'TECH-02', name: 'Amit Sharma', phone: '+91 98451 88910', email: 'amit.s@solarflow.in', activeProjects: 3, certifications: 'Certified High-Voltage & Hybrid Inverter Specialist' },
-  { id: 'TECH-03', name: 'Priya Patel', phone: '+91 97123 66540', email: 'priya.p@solarflow.in', activeProjects: 1, certifications: 'Electrical Inspector & Net Metering Liaison' },
-  { id: 'TECH-04', name: 'Vikas Deshmukh', phone: '+91 99670 12349', email: 'vikas.d@solarflow.in', activeProjects: 2, certifications: 'Master Rooftop Structural & Fabrication Lead' }
+  { id: 'TECH-01', name: 'Ramesh Kumar', phone: '+91 98230 44102', email: 'ramesh.k@sunpower.in', activeProjects: 2, certifications: 'MNRE Certified Solar Rooftop Installer Level 3' },
+  { id: 'TECH-02', name: 'Amit Sharma', phone: '+91 98451 88910', email: 'amit.s@sunpower.in', activeProjects: 3, certifications: 'Certified High-Voltage & Hybrid Inverter Specialist' },
+  { id: 'TECH-03', name: 'Priya Patel', phone: '+91 97123 66540', email: 'priya.p@sunpower.in', activeProjects: 1, certifications: 'Electrical Inspector & Net Metering Liaison' },
+  { id: 'TECH-04', name: 'Vikas Deshmukh', phone: '+91 99670 12349', email: 'vikas.d@sunpower.in', activeProjects: 2, certifications: 'Master Rooftop Structural & Fabrication Lead' }
 ];
 
 const INITIAL_CUSTOMERS: Customer[] = [
@@ -230,7 +230,7 @@ const INITIAL_INVENTORY: InventoryItem[] = [
     name: '3-Phase DC Distribution Box (DCDB) with Type 2 SPD',
     category: 'Accessories',
     model: 'DCDB-3P-600V',
-    brand: 'Hensel / SolarFlow',
+    brand: 'Hensel / SunPower',
     supplier: 'Power Electricals Wholesale',
     quantity: 18,
     minStockAlert: 6,
@@ -833,7 +833,7 @@ export class DataService {
     );
 
     if (duplicate) {
-      return { success: false, error: 'A customer with this phone number or email address already exists in SolarFlow.' };
+      return { success: false, error: 'A customer with this phone number or email address already exists in SunPower.' };
     }
 
     if (customer.id) {

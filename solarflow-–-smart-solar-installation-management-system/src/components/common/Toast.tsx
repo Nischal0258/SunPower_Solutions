@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface Toast {
   id: string;
@@ -38,27 +38,31 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-lg shadow-lg border text-sm transition-all animate-in fade-in slide-in-from-bottom-2 duration-200 ${
+            className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl shadow-xl border text-sm transition-all animate-in fade-in slide-in-from-bottom-2 duration-200 ${
               toast.type === 'error'
-                ? 'bg-[#FFFFFF] text-[#C66B45] border-[#C66B45]'
+                ? 'bg-white text-rose-700 border-rose-300'
+                : toast.type === 'warning'
+                ? 'bg-white text-amber-800 border-amber-300'
                 : toast.type === 'info'
-                ? 'bg-[#FFFFFF] text-[#292724] border-[#DBBA95]'
-                : 'bg-[#292724] text-[#FFFFFF] border-[#292724]'
+                ? 'bg-white text-slate-800 border-slate-300'
+                : 'bg-slate-900 text-white border-slate-800'
             }`}
           >
             {toast.type === 'error' ? (
-              <AlertCircle className="w-5 h-5 text-[#C66B45] shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            ) : toast.type === 'warning' ? (
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             ) : toast.type === 'info' ? (
-              <Info className="w-5 h-5 text-[#D9A441] shrink-0 mt-0.5" />
+              <Info className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
             ) : (
-              <CheckCircle2 className="w-5 h-5 text-[#DBBA95] shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
             )}
             <div className="flex-1 text-xs font-medium leading-relaxed">
               {toast.message}
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-inherit opacity-70 hover:opacity-100 p-0.5"
+              className="text-inherit opacity-60 hover:opacity-100 p-0.5 transition-opacity"
             >
               <X className="w-4 h-4" />
             </button>
