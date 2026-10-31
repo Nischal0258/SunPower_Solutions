@@ -372,7 +372,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
             title="Record rooftop azimuth, tilt, shading, and earthing test"
           >
             <Compass className="w-4 h-4 text-[#C66B45]" />
-            <span>{currentRole === "manager" || currentRole === "director" ? "View Site Surveys" : "Conduct Site Survey"}</span>
+            <span>{currentRole === "manager" || currentRole === "director" ? "View Site Surveys" : "Conduct Technical Survey"}</span>
           </button>
 
           <button

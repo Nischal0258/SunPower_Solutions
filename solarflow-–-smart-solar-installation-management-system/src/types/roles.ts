@@ -92,7 +92,8 @@ export const USER_ROLES: Record<UserRole, RoleInfo> = {
     avatarColor: 'bg-blue-600',
     recommendedTab: 'installations',
     description: 'Rooftop azimuth, tilt angle, shading & earthing approvals',
-    allowedTabs: ['installations', 'customers', 'warranties'],
+    // Strictly restricted exclusively to site feasibility surveys. No access to CRM, quotes, P&L, or settings!
+    allowedTabs: ['installations'],
   },
   warehouse: {
     id: 'warehouse',
@@ -131,7 +132,7 @@ export const USER_ROLES: Record<UserRole, RoleInfo> = {
     badge: 'Customer',
     avatarColor: 'bg-teal-600',
     recommendedTab: 'installations',
-    description: 'Installation progress, digital sign-off & warranty certificates',
-    allowedTabs: ['installations', 'warranties', 'tickets'],
+    description: 'View assigned products, view order history & place new orders',
+    allowedTabs: ['installations'],
   },
 };

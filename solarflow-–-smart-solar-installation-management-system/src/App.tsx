@@ -6,6 +6,7 @@ import { GlobalSearchModal } from './components/common/GlobalSearchModal';
 import { SignInPage } from './components/auth/SignInPage';
 import { CustomerPortalPage } from './pages/CustomerPortalPage';
 import { SiteSurveyModal } from './components/common/SiteSurveyModal';
+import { ProfileSettingsModal } from './components/common/ProfileSettingsModal';
 import { DataService } from './services/dataService';
 import { UserRole, USER_ROLES } from './types/roles';
 
@@ -32,11 +33,12 @@ interface AuthSession {
 
 const STORAGE_SESSION_KEY = 'sunpower_auth_session_v2';
 const STORAGE_TAB_KEY = 'sunpower_active_tab_v2';
+const STORAGE_SIDEBAR_COLLAPSED_KEY = 'sunpower_sidebar_collapsed';
 
 function AppContent() {
   const { showToast } = useToast();
 
-  // Load session from localStorage or default to signed in as Dr. Singhania
+  // Load session from localStorage or default to signed in as Manager
   const [session, setSession] = useState<AuthSession | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_SESSION_KEY);
@@ -49,42 +51,71 @@ function AppContent() {
     } catch (e) {
       console.warn('Failed to parse stored session:', e);
     }
-    // Default active session for Dr. Singhania
+    // Default active session for Operations Manager
     return {
-      role: 'director',
+      role: 'manager',
       name: 'Dr. Singhania',
-      email: 'd.singhania@sunpower.in',
-      title: 'Managing Director',
-      badge: 'Executive',
+      email: 'manager@gmail.com',
+      title: 'Operations Manager',
+      badge: 'Manager',
       avatarColor: 'bg-purple-600'
     };
   });
+
+  const currentRole: UserRole = session?.role || 'manager';
+  const roleInfo = USER_ROLES[currentRole];
 
   // Active navigation tab
   const [currentTab, setCurrentTab] = useState<NavTab>(() => {
     try {
       const storedTab = localStorage.getItem(STORAGE_TAB_KEY) as NavTab | null;
-      if (storedTab) return storedTab;
+      if (storedTab && roleInfo.allowedTabs.includes(storedTab)) {
+        return storedTab;
+      }
     } catch {}
-    return 'dashboard';
+    return roleInfo.recommendedTab;
   });
 
-  // Sidebar Expandable / Collapsible State
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  // Preserve sidebar state across page reloads and sessions via localStorage
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_SIDEBAR_COLLAPSED_KEY);
+      return stored ? JSON.parse(stored) : false;
+    } catch {
+      return false;
+    }
+  });
 
   const [targetId, setTargetId] = useState<string | undefined>(undefined);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isGlobalSurveyOpen, setIsGlobalSurveyOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [notifications, setNotifications] = useState(DataService.getNotifications());
 
-  const currentRole: UserRole = session?.role || 'director';
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_SIDEBAR_COLLAPSED_KEY, JSON.stringify(next));
+      } catch (e) {
+        console.warn('Failed to persist sidebar state:', e);
+      }
+      return next;
+    });
+  };
 
   const refreshNotifications = () => {
     setNotifications(DataService.getNotifications());
   };
 
   const handleNavigate = (tab: NavTab, target?: string) => {
+    // RBAC Route Guard: Block access if tab is not permitted for active role
+    if (!roleInfo.allowedTabs.includes(tab)) {
+      showToast(`Access Restricted: The ${roleInfo.badge} role does not have permission to access ${tab}.`, 'warning');
+      return;
+    }
+
     setCurrentTab(tab);
     setTargetId(target);
     try {
@@ -130,15 +161,6 @@ function AppContent() {
     showToast('Signed out of SunPower session.', 'info');
   };
 
-  const handleResetData = () => {
-    if (window.confirm('Reset application demonstration data to default state?')) {
-      DataService.resetToDefaults();
-      refreshNotifications();
-      showToast('Demo data restored to clean state.', 'info');
-      setTimeout(() => window.location.reload(), 400);
-    }
-  };
-
   // Badge counts for sidebar
   const projects = DataService.getProjects();
   const quotations = DataService.getQuotations();
@@ -150,22 +172,26 @@ function AppContent() {
   const lowStockCount = inventory.filter(i => i.quantity <= i.minStockAlert).length;
   const openTicketsCount = tickets.filter(t => t.status !== 'Resolved' && t.status !== 'Closed').length;
 
-  // Unauthenticated / Logged Out View - Render SignInPage with friend's warm palette
+  // Unauthenticated View: Render SignInPage
   if (!session) {
     return <SignInPage onLogin={handleLogin} />;
   }
 
+  // Customer Role View: Render Dedicated 3-Feature Customer Portal
+  if (currentRole === 'customer') {
+    return <CustomerPortalPage onLogout={handleLogout} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F3EF] text-[#292724] flex font-sans">
-      {/* Sidebar Navigation - Expandable and Collapsible */}
+      {/* Sidebar Navigation - Expandable and Collapsible with LocalStorage Persistence */}
       <Sidebar
         currentTab={currentTab}
         onSelectTab={(tab) => handleNavigate(tab)}
         isOpenMobile={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
         isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        onLogout={handleLogout}
+        onToggleCollapse={handleToggleSidebar}
         currentRole={currentRole}
         counts={{
           activeProjects: activeProjectsCount,
@@ -176,21 +202,21 @@ function AppContent() {
         }}
       />
 
-      {/* Main Content Area - Expands or contracts dynamically with the sidebar */}
+      {/* Main Content Area - Smooth 300ms transition between lg:pl-64 and lg:pl-20 */}
       <div className={`flex-1 ${
         isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
       } flex flex-col min-w-0 min-h-screen transition-all duration-300 ease-in-out`}>
-        {/* Top Navigation Bar */}
+        {/* Top Navigation Bar with Profile Settings & Logout */}
         <TopBar
           currentTab={currentTab}
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
           onNavigateTab={(tab) => handleNavigate(tab)}
-          onResetData={handleResetData}
           notifications={notifications}
           onRefreshNotifications={refreshNotifications}
           currentRole={currentRole}
           onLogout={handleLogout}
+          onOpenProfileSettings={() => setIsProfileModalOpen(true)}
         />
 
         {/* Viewport Canvas */}
@@ -281,6 +307,14 @@ function AppContent() {
           refreshNotifications();
           showToast('Site survey technical feasibility recorded successfully.', 'success');
         }}
+      />
+
+      {/* Personal Profile Settings Modal */}
+      <ProfileSettingsModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentRole={currentRole}
+        userEmail={session.email}
       />
     </div>
   );
