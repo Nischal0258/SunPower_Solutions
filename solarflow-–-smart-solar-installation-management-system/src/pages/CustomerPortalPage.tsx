@@ -264,13 +264,16 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
     setIsBOMModalOpen(true);
   };
 
-  // Milestone Progress Steps for Orders
+  // 8-Stage Milestone Progress Steps for Orders
   const milestoneSteps: { status: CustomerOrderStatus; title: string; desc: string }[] = [
     { status: 'Order Placed', title: '1. Order Placed', desc: 'Contract registered & advance invoice generated' },
-    { status: 'Site Survey Scheduled', title: '2. Site Feasibility Survey', desc: 'Azimuth, tilt angle & shading clearance' },
-    { status: 'Hardware Allocated', title: '3. Hardware Allocated', desc: 'Panels & inverter staged at central depot' },
-    { status: 'Installation In Progress', title: '4. Installation In Progress', desc: 'Rooftop mounting & electrical wiring' },
-    { status: 'Commissioned', title: '5. Commissioned & Net-Metered', desc: 'DISCOM bi-directional meter energized' }
+    { status: 'Survey Assigned', title: '2. Survey Assigned', desc: 'Lead field technician assigned to site' },
+    { status: 'Survey In Progress', title: '3. Survey In Progress', desc: 'Rooftop azimuth, tilt & earthing tests' },
+    { status: 'Survey Submitted', title: '4. Survey Submitted', desc: 'Feasibility report under Director review' },
+    { status: 'Feasibility Approved', title: '5. Feasibility Approved', desc: 'Roof approved & warehouse staging unlocked' },
+    { status: 'Hardware Dispatched', title: '6. Hardware Dispatched', desc: 'Modules, inverter & battery en route' },
+    { status: 'Installation & Handover Completed', title: '7. Handover Done', desc: 'Mounted, live tested & customer signed' },
+    { status: 'Commissioned & Closed', title: '8. Commissioned & Closed', desc: 'DISCOM net-meter energized & warranty active' }
   ];
 
   return (
@@ -1036,18 +1039,18 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
                           />
                         </div>
 
-                        {/* 5 Stage Nodes */}
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
+                        {/* 8 Stage Nodes */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
                           {milestoneSteps.map((step, idx) => {
                             const isCurrent = order.status === step.status;
-                            const isCompleted = order.progressPercent >= (idx + 1) * 20;
+                            const isCompleted = order.progressPercent >= (idx + 1) * 12.5 || order.status === 'Commissioned & Closed' || order.status === 'Commissioned';
 
                             return (
                               <div
                                 key={step.status}
                                 className={`p-2.5 rounded-xl border text-left transition-all ${
                                   isCurrent
-                                    ? 'bg-[#C66B45]/10 border-[#C66B45]'
+                                    ? 'bg-[#C66B45]/10 border-[#C66B45] ring-1 ring-[#C66B45]'
                                     : isCompleted
                                     ? 'bg-emerald-50/60 border-emerald-200'
                                     : 'bg-slate-50 border-slate-200 opacity-60'
@@ -1068,6 +1071,33 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
                             );
                           })}
                         </div>
+
+                        {/* Energized / Commissioned & Closed Live Dashboard Callout */}
+                        {(order.status === 'Commissioned & Closed' || order.status === 'Commissioned' || order.progressPercent === 100) && (
+                          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
+                                ⚡
+                              </div>
+                              <div>
+                                <h5 className="font-bold text-xs text-emerald-950">
+                                  Solar Installation Fully Commissioned & Energized!
+                                </h5>
+                                <p className="text-[11px] text-emerald-800">
+                                  Generating clean power onto the grid. 20-Year module and 2-Year inverter warranties active.
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setActiveTab('hardware')}
+                              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs shrink-0 cursor-pointer"
+                            >
+                              <span>View Live Solar Telemetry & Certificates</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Assigned Lead Technician & Actions Row */}

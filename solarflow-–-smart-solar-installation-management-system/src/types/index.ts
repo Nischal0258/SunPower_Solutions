@@ -23,7 +23,19 @@ export type ProductCategory =
 
 export type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
 
+export type ProjectLifecycleStage =
+  | 'Order Placed'
+  | 'Survey Assigned'
+  | 'Survey In Progress'
+  | 'Survey Submitted'
+  | 'Feasibility Approved'
+  | 'Hardware Dispatched'
+  | 'Installation & Handover Completed'
+  | 'Pending Final Commissioning'
+  | 'Commissioned & Closed';
+
 export type InstallationStage = 
+  | ProjectLifecycleStage
   | 'Survey Pending'
   | 'Survey Completed'
   | 'Material Ready'
@@ -135,6 +147,62 @@ export interface InstallationPhoto {
   phase: 'Survey' | 'Mounting' | 'Wiring' | 'Completion';
 }
 
+
+export interface FeasibilityReport {
+  id?: string;
+  projectId?: string;
+  technicianId?: string;
+  technicianName?: string;
+  surveyorName?: string;
+  surveyDate?: string;
+  roofType: 'Concrete RCC' | 'Concrete Flat' | 'Tin / Metal Shed' | 'Tin / Metal Sheet' | 'Clay Tile' | 'Asbestos Sheet';
+  roofTiltDeg?: number;
+  tiltAngleDeg?: number;
+  roofAzimuth?: 'South' | 'South-East' | 'South-West' | 'East' | 'West' | 'North' | string;
+  azimuthOrientation?: string;
+  shadingObstacles: boolean;
+  shadingNotes?: string;
+  earthingResistanceOhms?: number;
+  roofPhotoUrl?: string;
+  panelPhotoUrl?: string;
+  photos?: string[];
+  structureRecommendation?: string;
+  submittedAt?: string;
+  status?: 'Submitted' | 'Approved' | 'Re-survey Requested';
+  verdict?: string;
+  notes?: string;
+  directorReviewNotes?: string;
+}
+
+export interface HardwareDispatchRecord {
+  projectId?: string;
+  moduleSerialRange?: string;
+  moduleSerials?: string;
+  inverterSerial: string;
+  batterySerial?: string;
+  dispatchedAt?: string;
+  dispatchDate?: string;
+  dispatchedBy?: string;
+  truckNo?: string;
+  driverName?: string;
+  notes?: string;
+}
+
+export interface CommissioningData {
+  projectId?: string;
+  testPowerOutputKw: number;
+  postInstallPhotos?: string[];
+  photos?: string[];
+  customerSignature: string;
+  customerSignerName?: string;
+  signatoryName?: string;
+  completionDate?: string;
+  commissioningDate?: string;
+  notes?: string;
+  handoverNotes?: string;
+  approvedByDirector?: boolean;
+}
+
 export interface InstallationProject {
   id: string;
   projectId: string; // e.g. "PRJ-2026-042"
@@ -159,6 +227,9 @@ export interface InstallationProject {
   approvalSignature?: string; // Data URL or recorded signatory
   approvalNotes?: string;
   approvalDate?: string;
+  feasibilityReport?: FeasibilityReport;
+  hardwareDispatch?: HardwareDispatchRecord;
+  commissioningData?: CommissioningData;
   createdAt: string;
 }
 
@@ -250,6 +321,7 @@ export interface SystemNotification {
 // ============================================================================
 
 export type CustomerOrderStatus = 
+  | ProjectLifecycleStage
   | 'Pending Approval'
   | 'Technician Dispatched / Survey Scheduled'
   | 'Order Placed' 

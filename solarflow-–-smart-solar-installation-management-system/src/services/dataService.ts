@@ -17,6 +17,10 @@ import {
   BusinessTask,
   ActivityLog,
   SystemNotification
+,
+  FeasibilityReport,
+  HardwareDispatchRecord,
+  CommissioningData
 } from '../types';
 
 const STORAGE_KEY = 'sunpower_app_data_v2';
@@ -386,22 +390,22 @@ const INITIAL_QUOTATIONS: Quotation[] = [
 
 const INITIAL_PROJECTS: InstallationProject[] = [
   {
-    id: 'PRJ-001',
+    id: 'PRJ-2026-042',
     projectId: 'PRJ-2026-042',
     quotationId: 'QUO-001',
     quotationNumber: 'QT-2026-089',
     customerId: 'CUST-001',
-    customerName: 'Rajendra Joshi',
+    customerName: 'Aarav Mehta',
     customerPhone: '+91 98201 54321',
     customerAddress: 'Plot 42, Baner Hills, Pashan Highway, Pune',
     capacityKw: 10,
     systemType: 'Hybrid',
     technicianId: 'TECH-01',
-    technicianName: 'Ramesh Kumar',
+    technicianName: 'Rajesh Sharma',
     surveyDate: '2026-09-24',
     installationDate: '2026-10-24',
     completionDate: '2026-10-29',
-    stage: 'Completed',
+    stage: 'Commissioned & Closed',
     progressPercent: 100,
     installedProducts: [
       {
@@ -419,18 +423,18 @@ const INITIAL_PROJECTS: InstallationProject[] = [
       {
         id: 'IP-2',
         productCategory: 'Inverters',
-        productName: 'Deye 10kW Hybrid Three-Phase Inverter',
-        model: 'SUN-10K-SG04LP3',
-        serialNumbers: ['INV-DEY-10K-4489'],
+        productName: 'Growatt 10kW Hybrid Three-Phase Inverter',
+        model: 'SPF-10000-ES',
+        serialNumbers: ['INV-GW-10K-4489'],
         deliveryDate: '2026-10-22',
         warrantyYears: 2
       },
       {
         id: 'IP-3',
         productCategory: 'Batteries',
-        productName: 'Exide 5.12 kWh LiFePO4 Battery Bank',
-        model: 'SOLAR-LFP-51100',
-        serialNumbers: ['BAT-EXI-51-7712', 'BAT-EXI-51-7713'],
+        productName: 'Pylontech 4.8 kWh LiFePO4 Battery Bank',
+        model: 'US5000',
+        serialNumbers: ['BAT-PY-48-7712', 'BAT-PY-48-7713'],
         deliveryDate: '2026-10-22',
         warrantyYears: 2
       }
@@ -446,19 +450,19 @@ const INITIAL_PROJECTS: InstallationProject[] = [
       {
         id: 'PH-2',
         url: '/src/assets/images/solar_inverter_battery_setup_1793436858572.jpg',
-        caption: 'Deye 10kW Hybrid Inverter & Dual Exide LiFePO4 Battery bank commissioned with AC/DC DB boxes',
+        caption: 'Growatt 10kW Hybrid Inverter & Pylontech Battery bank commissioned with AC/DC DB boxes',
         uploadedAt: '2026-10-28T14:15:00Z',
         phase: 'Completion'
       }
     ],
     customerApproved: true,
-    approvalSignature: 'Rajendra Joshi (Digital Verification OTP #882194)',
-    approvalNotes: 'System tested on full load. Generation recorded 48.5 units on Day 1. Handover certificate signed.',
+    approvalSignature: 'Aarav Mehta [Digital Verification Touch Signed]',
+    approvalNotes: 'System tested on full load. Handover completed and DISCOM net meter energized.',
     approvalDate: '2026-10-29',
     createdAt: '2026-09-22T08:00:00Z'
   },
   {
-    id: 'PRJ-002',
+    id: 'PRJ-2026-045',
     projectId: 'PRJ-2026-045',
     quotationId: 'QUO-002',
     quotationNumber: 'QT-2026-094',
@@ -466,46 +470,189 @@ const INITIAL_PROJECTS: InstallationProject[] = [
     customerName: 'Pooja Sharma',
     customerPhone: '+91 98112 33456',
     customerAddress: 'Villa 18, Greenwood Estates, Whitefield, Bengaluru',
-    capacityKw: 6,
-    systemType: 'Hybrid',
-    technicianId: 'TECH-02',
-    technicianName: 'Amit Sharma',
-    surveyDate: '2026-10-28',
-    installationDate: '2026-11-04',
-    stage: 'Material Ready',
-    progressPercent: 50,
+    capacityKw: 5,
+    systemType: 'On-grid',
+    stage: 'Order Placed',
+    progressPercent: 15,
     installedProducts: [],
-    photos: [
-      {
-        id: 'PH-3',
-        url: '/src/assets/images/solar_technician_survey_1793436857911.jpg',
-        caption: 'Lead Technician Amit Sharma completing shading analysis and roof tilt survey',
-        uploadedAt: '2026-10-28T11:00:00Z',
-        phase: 'Survey'
-      }
-    ],
+    photos: [],
     customerApproved: false,
     createdAt: '2026-10-20T10:00:00Z'
   },
   {
-    id: 'PRJ-003',
+    id: 'PRJ-2026-049',
+    projectId: 'PRJ-2026-049',
+    customerId: 'CUST-003',
+    customerName: 'Rohan Kulkarni',
+    customerPhone: '+91 98330 91823',
+    customerAddress: 'B-402, Rohan Tarang, Wakad, Pune',
+    capacityKw: 7,
+    systemType: 'Hybrid',
+    technicianId: 'TECH-01',
+    technicianName: 'Rajesh Sharma',
+    surveyDate: '2026-11-01',
+    stage: 'Survey Assigned',
+    progressPercent: 25,
+    installedProducts: [],
+    photos: [],
+    customerApproved: false,
+    createdAt: '2026-10-22T11:00:00Z'
+  },
+  {
+    id: 'PRJ-2026-046',
     projectId: 'PRJ-2026-046',
     customerId: 'CUST-003',
     customerName: 'Vikram Rao',
     customerPhone: '+91 99200 88712',
-    customerAddress: 'GIDC Industrial Sector 3, Sanand, Ahmedabad',
-    capacityKw: 25,
+    customerAddress: 'Plot 88, Jubilee Hills, Road No. 36, Hyderabad',
+    capacityKw: 15,
     systemType: 'On-grid',
-    technicianId: 'TECH-04',
-    technicianName: 'Vikas Deshmukh',
-    surveyDate: '2026-11-02',
-    installationDate: '2026-11-15',
-    stage: 'Survey Pending',
-    progressPercent: 20,
+    technicianId: 'TECH-01',
+    technicianName: 'Rajesh Sharma',
+    surveyDate: '2026-10-30',
+    stage: 'Survey Submitted',
+    progressPercent: 40,
+    feasibilityReport: {
+      surveyorName: 'Rajesh Sharma (Lead Field Technician)',
+      surveyDate: '2026-10-30',
+      roofType: 'Concrete Flat',
+      tiltAngleDeg: 24,
+      azimuthOrientation: 'South-Facing (Optimal 180°)',
+      shadingObstacles: false,
+      shadingNotes: 'Clear rooftop horizon. RCC slab load bearing verified.',
+      earthingResistanceOhms: 2.1,
+      photos: [
+        '/src/assets/images/solar_rooftop_installation_1793436857441.jpg',
+        '/src/assets/images/solar_technician_survey_1793436857911.jpg'
+      ],
+      verdict: 'Feasible / Approved for Solar',
+      notes: 'RCC roof is in prime structural condition. 28x Waaree 545W panels recommended.'
+    },
+    installedProducts: [],
+    photos: [
+      {
+        id: 'PH-46-1',
+        url: '/src/assets/images/solar_technician_survey_1793436857911.jpg',
+        caption: 'Lead Technician Rajesh Sharma verifying roof tilt angle and South azimuth orientation',
+        uploadedAt: '2026-10-30T11:00:00Z',
+        phase: 'Survey'
+      }
+    ],
+    customerApproved: false,
+    createdAt: '2026-10-26T15:00:00Z'
+  },
+  {
+    id: 'PRJ-2026-044',
+    projectId: 'PRJ-2026-044',
+    customerId: 'CUST-004',
+    customerName: 'Sanjay Deshpande',
+    customerPhone: '+91 98450 12390',
+    customerAddress: 'Survey No. 45, Bavdhan, Pune',
+    capacityKw: 10,
+    systemType: 'Hybrid',
+    technicianId: 'TECH-01',
+    technicianName: 'Rajesh Sharma',
+    surveyDate: '2026-10-28',
+    stage: 'Feasibility Approved',
+    progressPercent: 50,
+    feasibilityReport: {
+      surveyorName: 'Rajesh Sharma (Lead Field Technician)',
+      surveyDate: '2026-10-28',
+      roofType: 'Tin / Metal Sheet',
+      tiltAngleDeg: 20,
+      azimuthOrientation: 'South-East (135°)',
+      shadingObstacles: false,
+      shadingNotes: 'Trapezoidal metal sheet with aluminium clamp brackets.',
+      earthingResistanceOhms: 2.4,
+      photos: [
+        '/src/assets/images/solar_rooftop_installation_1793436857441.jpg'
+      ],
+      verdict: 'Feasible / Approved for Solar',
+      notes: 'Feasibility verified and approved by Director. Order unlocked for warehouse staging.'
+    },
     installedProducts: [],
     photos: [],
     customerApproved: false,
-    createdAt: '2026-10-26T15:00:00Z'
+    createdAt: '2026-10-25T09:00:00Z'
+  },
+  {
+    id: 'PRJ-2026-047',
+    projectId: 'PRJ-2026-047',
+    customerId: 'CUST-005',
+    customerName: 'Anil Kulkarni',
+    customerPhone: '+91 98220 54190',
+    customerAddress: 'Row House 12, Aundh, Pune',
+    capacityKw: 8,
+    systemType: 'Hybrid',
+    technicianId: 'TECH-01',
+    technicianName: 'Rajesh Sharma',
+    surveyDate: '2026-10-25',
+    installationDate: '2026-11-01',
+    stage: 'Hardware Dispatched',
+    progressPercent: 65,
+    hardwareDispatch: {
+      dispatchDate: '2026-10-31',
+      moduleSerials: 'PV-WA-540-9901..9916',
+      inverterSerial: 'INV-GW-8000-4491',
+      batterySerial: 'BAT-PY-48100-2401',
+      truckNo: 'MH-12-RN-8831',
+      driverName: 'Ramesh Patil (+91 98230 44912)',
+      notes: 'Dispatched from central warehouse.'
+    },
+    installedProducts: [],
+    photos: [],
+    customerApproved: false,
+    createdAt: '2026-10-22T14:00:00Z'
+  },
+  {
+    id: 'PRJ-2026-048',
+    projectId: 'PRJ-2026-048',
+    customerId: 'CUST-006',
+    customerName: 'Meera Nambiar',
+    customerPhone: '+91 97410 88912',
+    customerAddress: 'Plot 104, HSR Layout Sector 2, Bengaluru',
+    capacityKw: 10,
+    systemType: 'Hybrid',
+    technicianId: 'TECH-01',
+    technicianName: 'Rajesh Sharma',
+    surveyDate: '2026-10-20',
+    installationDate: '2026-10-29',
+    stage: 'Installation & Handover Completed',
+    progressPercent: 85,
+    hardwareDispatch: {
+      dispatchDate: '2026-10-27',
+      moduleSerials: 'PV-WA-540-8801..8820',
+      inverterSerial: 'INV-GW-10K-9902',
+      batterySerial: 'BAT-PY-48100-5511',
+      truckNo: 'KA-01-MJ-2024',
+      driverName: 'Suresh Gowda',
+      notes: 'Delivered to site.'
+    },
+    commissioningData: {
+      commissioningDate: '2026-10-31',
+      testPowerOutputKw: 9.8,
+      photos: [
+        '/src/assets/images/solar_rooftop_installation_1793436857441.jpg',
+        '/src/assets/images/solar_inverter_battery_setup_1793436858572.jpg'
+      ],
+      customerSignature: 'Meera Nambiar [Digital Touch Signed]',
+      signatoryName: 'Meera Nambiar',
+      handoverNotes: 'System synchronized with grid, live test 9.8 kW verified, customer orientation completed.',
+      approvedByDirector: false
+    },
+    installedProducts: [],
+    photos: [
+      {
+        id: 'PH-48-1',
+        url: '/src/assets/images/solar_rooftop_installation_1793436857441.jpg',
+        caption: '18x Waaree panels installed on elevated structure',
+        uploadedAt: '2026-10-31T11:00:00Z',
+        phase: 'Completion'
+      }
+    ],
+    customerApproved: true,
+    approvalSignature: 'Meera Nambiar [Digital Touch Signed]',
+    createdAt: '2026-10-18T10:00:00Z'
   }
 ];
 
@@ -940,6 +1087,11 @@ export class DataService {
         }
         if (!parsed.helpdeskTickets || parsed.helpdeskTickets.length === 0) {
           parsed.helpdeskTickets = INITIAL_HELPDESK_TICKETS;
+        }
+        // Ensure new 8-stage lifecycle demo projects are always populated
+        if (!parsed.projects || parsed.projects.length < INITIAL_PROJECTS.length || !parsed.projects.some((p: any) => p.id === 'PRJ-2026-047')) {
+          parsed.projects = INITIAL_PROJECTS;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
         }
         return parsed;
       }
@@ -1614,6 +1766,450 @@ export class DataService {
     return newOrder;
   }
 
+
+  // ==========================================================================
+  // STRICT 8-STAGE END-TO-END PROJECT LIFECYCLE STATE MACHINE
+  // ==========================================================================
+
+  /**
+   * Stage 2: Director selects technician and clicks "Assign Technician"
+   * Transitions status to 'Survey Assigned'
+   */
+  public static assignTechnicianToSurvey(
+    projectId: string,
+    technicianId: string,
+    scheduledDate: string,
+    notes?: string
+  ): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    const tech = TECHNICIANS.find(t => t.id === technicianId) || TECHNICIANS[0];
+    if (!proj) return false;
+
+    proj.stage = 'Survey Assigned';
+    proj.progressPercent = 25;
+    proj.technicianId = tech.id;
+    proj.technicianName = tech.name;
+    proj.surveyDate = scheduledDate;
+    if (notes) {
+      proj.approvalNotes = (proj.approvalNotes ? proj.approvalNotes + ' | ' : '') + `Director notes: ${notes}`;
+    }
+
+    // Sync matching customer order
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
+      if (order) {
+        order.status = 'Survey Assigned';
+        order.progressPercent = 25;
+        order.assignedTechnicianName = tech.name;
+        order.assignedTechnicianPhone = tech.phone;
+        order.scheduledSurveyDate = scheduledDate;
+      }
+    }
+
+    // Auto-advance customer lead status
+    const customer = data.customers.find(c => c.id === proj.customerId || (c.email && c.email.toLowerCase() === proj.customerPhone.toLowerCase()));
+    if (customer) {
+      customer.leadStatus = 'Site Survey';
+    }
+
+    // Log Activity
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'project',
+      title: `Survey Assigned: ${proj.projectId}`,
+      description: `Director assigned technician ${tech.name} for site survey on ${scheduledDate}.`,
+      timestamp: new Date().toISOString(),
+      actor: 'Dr. Singhania (Director)'
+    });
+
+    // Notify Field Technician
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `New Survey Assigned: ${proj.projectId}`,
+      message: `Site survey assigned for ${proj.customerName} on ${scheduledDate}.`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return true;
+  }
+
+  /**
+   * Stage 3: Technician opens survey task on-site
+   * Transitions status to 'Survey In Progress'
+   */
+  public static startSurvey(projectId: string): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    if (!proj) return false;
+
+    proj.stage = 'Survey In Progress';
+    proj.progressPercent = 35;
+
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      if (order) {
+        order.status = 'Survey In Progress';
+        order.progressPercent = 35;
+      }
+    }
+
+    this.save(data);
+    return true;
+  }
+
+  /**
+   * Stage 4: Technician completes technical feasibility form & submits report
+   * Transitions status to 'Survey Submitted'
+   */
+  public static submitFeasibilityReport(
+    projectId: string,
+    report: Omit<FeasibilityReport, 'id' | 'submittedAt'>
+  ): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    if (!proj) return false;
+
+    const fullReport: FeasibilityReport = {
+      ...report,
+      id: `FR-${Date.now()}`,
+      submittedAt: new Date().toISOString(),
+      status: 'Submitted'
+    };
+
+    proj.feasibilityReport = fullReport;
+    proj.stage = 'Survey Submitted';
+    proj.progressPercent = 45;
+
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      if (order) {
+        order.status = 'Survey Submitted';
+        order.progressPercent = 45;
+      }
+    }
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'project',
+      title: `Feasibility Report Submitted: ${proj.projectId}`,
+      description: `Technician ${report.technicianName || report.surveyorName || 'Field Crew'} submitted technical report (Tilt: ${report.roofTiltDeg || report.tiltAngleDeg}°, Azimuth: ${report.roofAzimuth || report.azimuthOrientation}, Roof: ${report.roofType}).`,
+      timestamp: new Date().toISOString(),
+      actor: report.technicianName || report.surveyorName || 'Lead Technician'
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Feasibility Review Required: ${proj.projectId}`,
+      message: `Feasibility report submitted by ${report.technicianName || report.surveyorName || 'Lead Technician'}. Awaiting Director review.`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return true;
+  }
+
+  /**
+   * Stage 5: Director approves completed feasibility report
+   * Transitions status to 'Feasibility Approved' (Unlocks Warehouse Dispatch)
+   */
+  public static approveFeasibilityReport(projectId: string, directorNotes?: string): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    if (!proj) return false;
+
+    proj.stage = 'Feasibility Approved';
+    proj.progressPercent = 55;
+    if (proj.feasibilityReport) {
+      proj.feasibilityReport.status = 'Approved';
+      if (directorNotes) proj.feasibilityReport.directorReviewNotes = directorNotes;
+    }
+
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      if (order) {
+        order.status = 'Feasibility Approved';
+        order.progressPercent = 55;
+      }
+    }
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'project',
+      title: `Feasibility Approved: ${proj.projectId}`,
+      description: `Director approved technical feasibility report for ${proj.customerName}. Warehouse hardware dispatch unlocked.`,
+      timestamp: new Date().toISOString(),
+      actor: 'Dr. Singhania (Director)'
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Hardware Dispatch Unlocked: ${proj.projectId}`,
+      message: `Feasibility approved. Warehouse staff may now scan & dispatch hardware components.`,
+      type: 'info',
+      date: 'Just now',
+      read: false,
+      linkTab: 'warehouse'
+    });
+
+    this.save(data);
+    return true;
+  }
+
+  /**
+   * Stage 5 (Alternative): Director requests re-survey
+   * Transitions status back to 'Survey Assigned' with notes
+   */
+  public static requestResurvey(projectId: string, reason: string): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    if (!proj) return false;
+
+    proj.stage = 'Survey Assigned';
+    proj.progressPercent = 25;
+    if (proj.feasibilityReport) {
+      proj.feasibilityReport.status = 'Re-survey Requested';
+      proj.feasibilityReport.directorReviewNotes = reason;
+    }
+    proj.approvalNotes = `Re-survey Requested: ${reason}`;
+
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      if (order) {
+        order.status = 'Survey Assigned';
+        order.progressPercent = 25;
+      }
+    }
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Re-survey Requested: ${proj.projectId}`,
+      message: `Director requested re-survey: "${reason}". Please re-visit site to gather updated specs.`,
+      type: 'warning',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return true;
+  }
+
+  /**
+   * Stage 6: Warehouse enters manual serial numbers & clicks "Dispatch Hardware"
+   * Transitions status to 'Hardware Dispatched'
+   */
+  public static dispatchWarehouseHardware(
+    projectId: string,
+    dispatch: Omit<HardwareDispatchRecord, 'dispatchedAt'>
+  ): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    if (!proj) return false;
+
+    const record: HardwareDispatchRecord = {
+      ...dispatch,
+      dispatchedAt: new Date().toISOString()
+    };
+
+    proj.hardwareDispatch = record;
+    proj.stage = 'Hardware Dispatched';
+    proj.progressPercent = 70;
+
+    // Register warranties for dispatched equipment
+    if (dispatch.inverterSerial) {
+      data.warranties.unshift({
+        id: `WAR-${Date.now()}-1`,
+        serialNumber: dispatch.inverterSerial,
+        productCategory: 'Inverters',
+        productName: 'Solar Hybrid Inverter',
+        model: 'SPF-5000-ES',
+        customerId: proj.customerId,
+        customerName: proj.customerName,
+        customerPhone: proj.customerPhone,
+        customerAddress: proj.customerAddress,
+        projectId: proj.projectId,
+        deliveryDate: new Date().toISOString().split('T')[0],
+        warrantyYears: 2,
+        warrantyStartDate: new Date().toISOString().split('T')[0],
+        warrantyEndDate: new Date(Date.now() + 2 * 365 * 86400000).toISOString().split('T')[0],
+        status: 'Active',
+        claimsCount: 0
+      });
+    }
+
+    if (dispatch.batterySerial) {
+      data.warranties.unshift({
+        id: `WAR-${Date.now()}-2`,
+        serialNumber: dispatch.batterySerial,
+        productCategory: 'Batteries',
+        productName: 'LiFePO4 Storage Battery',
+        model: 'LFP-5120',
+        customerId: proj.customerId,
+        customerName: proj.customerName,
+        customerPhone: proj.customerPhone,
+        customerAddress: proj.customerAddress,
+        projectId: proj.projectId,
+        deliveryDate: new Date().toISOString().split('T')[0],
+        warrantyYears: 2,
+        warrantyStartDate: new Date().toISOString().split('T')[0],
+        warrantyEndDate: new Date(Date.now() + 2 * 365 * 86400000).toISOString().split('T')[0],
+        status: 'Active',
+        claimsCount: 0
+      });
+    }
+
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      if (order) {
+        order.status = 'Hardware Dispatched';
+        order.progressPercent = 70;
+      }
+    }
+
+    // Auto-advance customer lead status
+    const customer = data.customers.find(c => c.id === proj.customerId);
+    if (customer) {
+      customer.leadStatus = 'Installation';
+    }
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'inventory',
+      title: `Hardware Dispatched: ${proj.projectId}`,
+      description: `Warehouse dispatched hardware for ${proj.customerName} (Modules: ${dispatch.moduleSerialRange}, Inverter: ${dispatch.inverterSerial}).`,
+      timestamp: new Date().toISOString(),
+      actor: dispatch.dispatchedBy || 'Vikram Singh (Warehouse)'
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Hardware En Route: ${proj.projectId}`,
+      message: `Hardware has been dispatched by warehouse. Field technician may begin rooftop mounting.`,
+      type: 'info',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return true;
+  }
+
+  /**
+   * Stage 7: Technician enters test power output, 2 photos, and collects Customer digital signature
+   * Transitions status to 'Installation & Handover Completed' (Pending Final Commissioning)
+   */
+  public static submitInstallationCommissioning(
+    projectId: string,
+    dataInput: Omit<CommissioningData, 'completionDate'>
+  ): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    if (!proj) return false;
+
+    const commData: CommissioningData = {
+      ...dataInput,
+      completionDate: new Date().toISOString()
+    };
+
+    proj.commissioningData = commData;
+    proj.customerApproved = true;
+    proj.approvalSignature = dataInput.customerSignature;
+    proj.approvalDate = new Date().toISOString().split('T')[0];
+    proj.stage = 'Installation & Handover Completed';
+    proj.progressPercent = 85;
+
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      if (order) {
+        order.status = 'Installation & Handover Completed';
+        order.progressPercent = 85;
+      }
+    }
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'project',
+      title: `Installation & Handover Completed: ${proj.projectId}`,
+      description: `Technician completed physical installation and captured customer digital acceptance signature. Test output: ${dataInput.testPowerOutputKw} kW.`,
+      timestamp: new Date().toISOString(),
+      actor: 'Rajesh & Team (Field Tech)'
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Commissioning Sign-Off Required: ${proj.projectId}`,
+      message: `Customer ${proj.customerName} signed on-site handover. Director review required to close project.`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return true;
+  }
+
+  /**
+   * Stage 8: Director approves final commissioning and closes project
+   * Transitions status to 'Commissioned & Closed' (100% Complete)
+   * Auto-generates Warranty & Commissioning Certificate
+   */
+  public static approveCommissioningAndClose(projectId: string): boolean {
+    const data = this.load();
+    const proj = data.projects.find(p => p.id === projectId || p.projectId === projectId);
+    if (!proj) return false;
+
+    proj.stage = 'Commissioned & Closed';
+    proj.progressPercent = 100;
+    proj.completionDate = new Date().toISOString().split('T')[0];
+
+    if (data.customerOrders) {
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      if (order) {
+        order.status = 'Commissioned & Closed';
+        order.progressPercent = 100;
+        order.documentUrl = 'Official Handover, Net-Metering & 20-Year Warranty Certificate';
+      }
+    }
+
+    // Auto-advance customer lead status
+    const customer = data.customers.find(c => c.id === proj.customerId);
+    if (customer) {
+      customer.leadStatus = 'Commissioned';
+    }
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'project',
+      title: `Project Commissioned & Closed: ${proj.projectId}`,
+      description: `Director Dr. Singhania officially signed off final commissioning for ${proj.customerName}. Warranty certificate released.`,
+      timestamp: new Date().toISOString(),
+      actor: 'Dr. Singhania (Director)'
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Project Commissioned: ${proj.projectId}`,
+      message: `System for ${proj.customerName} is now fully commissioned and energized. Commissioning certificate issued.`,
+      type: 'info',
+      date: 'Just now',
+      read: false,
+      linkTab: 'installations'
+    });
+
+    this.save(data);
+    return true;
+  }
+
   public static approveOrderAndDispatchTech(
     orderId: string,
     technicianId: string,
@@ -1686,8 +2282,16 @@ export class DataService {
     if (!order) return false;
 
     const progressMap: Record<CustomerOrderStatus, number> = {
-      'Pending Approval': 15,
+      'Pending Approval': 10,
       'Order Placed': 15,
+      'Survey Assigned': 25,
+      'Survey In Progress': 35,
+      'Survey Submitted': 45,
+      'Feasibility Approved': 55,
+      'Hardware Dispatched': 70,
+      'Installation & Handover Completed': 85,
+      'Pending Final Commissioning': 90,
+      'Commissioned & Closed': 100,
       'Technician Dispatched / Survey Scheduled': 35,
       'Site Survey Scheduled': 35,
       'Hardware Allocated': 55,

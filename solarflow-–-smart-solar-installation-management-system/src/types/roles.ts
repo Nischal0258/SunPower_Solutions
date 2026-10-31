@@ -100,8 +100,8 @@ export const USER_ROLES: Record<UserRole, RoleInfo> = {
     badge: 'Field Tech',
     avatarColor: 'bg-cyan-600',
     recommendedTab: 'installations',
-    description: 'On-site technical surveys, rooftop mounting, photo QA audit, warranties & service ticket creation',
-    allowedTabs: ['installations', 'tickets', 'warranties'],
+    description: 'On-site technical surveys, rooftop mounting, physical testing, photo QA audit, and customer digital handover signature',
+    allowedTabs: ['installations', 'warranties'],
   },
   support: {
     id: 'support',

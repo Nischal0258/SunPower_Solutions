@@ -1,7 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Compass,
-  Scan,
   Sun,
   Search,
   Plus,
@@ -11,22 +10,27 @@ import {
   Clock,
   Camera,
   FileCheck,
-  Upload,
   ArrowRight,
   ShieldCheck,
   Image as ImageIcon,
-  PenTool,
-  RotateCcw
+  RotateCcw,
+  Zap,
+  Truck,
+  Layers,
+  FileText,
+  AlertTriangle,
+  User,
+  CheckCircle,
+  ExternalLink
 } from 'lucide-react';
 import { DataService, TECHNICIANS } from '../services/dataService';
-import { InstallationProject, InstallationStage, InstalledProductItem, InstallationPhoto } from '../types';
+import { InstallationProject, ProjectLifecycleStage, InstallationPhoto } from '../types';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { useToast } from '../components/common/Toast';
 import { NavTab } from '../components/layout/Sidebar';
 import { UserRole } from '../types/roles';
-import { SiteSurveyModal, SiteSurveyData } from '../components/common/SiteSurveyModal';
-import { SerialNumberScanModal } from '../components/common/SerialNumberScanModal';
+import { TechnicianPortalView } from '../components/technician/TechnicianPortalView';
 
 interface InstallationsPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
@@ -39,10 +43,15 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   onNavigateTab,
   initialProjectId,
   onOpenSiteSurvey,
-  currentRole = "manager"
+  currentRole = "director"
 }) => {
+  // If user role is technician, render the dedicated Field Technician Execution Workspace
+  if (currentRole === 'technician') {
+    return <TechnicianPortalView onNavigateTab={onNavigateTab} />;
+  }
+
   const { showToast } = useToast();
-  const [projects, setProjects] = useState<InstallationProject[]>(DataService.getProjects());
+  const [projects, setProjects] = useState<InstallationProject[]>(() => DataService.getProjects());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStage, setSelectedStage] = useState<string>('All');
 
@@ -54,52 +63,17 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
     return null;
   });
 
-  // Photo upload simulator state
-  const [newPhotoCaption, setNewPhotoCaption] = useState('');
-  const [newPhotoPhase, setNewPhotoPhase] = useState<'Survey' | 'Mounting' | 'Wiring' | 'Completion'>('Mounting');
+  // Director Actions State: Assign Technician
+  const [assignTechId, setAssignTechId] = useState<string>(TECHNICIANS[0]?.id || '');
+  const [assignSurveyDate, setAssignSurveyDate] = useState<string>(
+    new Date(Date.now() + 86400000).toISOString().split('T')[0]
+  );
+  const [assignNotes, setAssignNotes] = useState<string>('Verify RCC roof anchor depth and conduit path to ground floor meter.');
 
-  // Serial recording state
-  const [newSerialCategory, setNewSerialCategory] = useState<'Solar Panels' | 'Inverters' | 'Batteries'>('Solar Panels');
-  const [newSerialProductName, setNewSerialProductName] = useState('Waaree 545W Mono PERC Panel');
-  const [newSerialValue, setNewSerialValue] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
-
-  // Digital Signature Canvas
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [hasSignature, setHasSignature] = useState(false);
-  const [signatoryName, setSignatoryName] = useState('');
-  const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
-
-
-  const handleSaveSurvey = (survey: SiteSurveyData) => {
-    if (!activeProject) return;
-    const updated = DataService.saveProject({
-      id: activeProject.id,
-      surveyDate: new Date().toISOString().split('T')[0],
-      stage: survey.approved ? 'Survey Completed' : 'Survey Pending',
-      progressPercent: survey.approved ? Math.max(activeProject.progressPercent, 30) : activeProject.progressPercent,
-      approvalNotes: `Surveyor: ${survey.surveyorName} | Tilt: ${survey.roofTiltDeg}° | Azimuth: ${survey.roofDirection} | Earthing: ${survey.earthingResistanceOhms}Ω | ${survey.notes}`
-    });
-    if (updated) {
-      showToast(
-        survey.approved 
-          ? 'Site survey approved! Roof feasibility verified & Quotation unlocked.' 
-          : 'Site survey recorded (roof flagged pending adjustments).', 
-        survey.approved ? 'success' : 'info'
-      );
-      refreshList();
-    }
-  };
-
-  const handleScannedSerial = (code: string, category?: string) => {
-    setNewSerialValue(code);
-    if (category && (category === 'Inverters' || category === 'Batteries' || category === 'Solar Panels')) {
-      setNewSerialCategory(category as any);
-    }
-    showToast(`Serial number ${code} verified & bound to installation project!`, 'info');
-  };
+  // Director Actions State: Feasibility Approval / Re-survey
+  const [directorApprovalNotes, setDirectorApprovalNotes] = useState<string>('Feasibility parameters verified. Rooftop tilt and orientation approved for installation.');
+  const [resurveyReason, setResurveyReason] = useState<string>('');
+  const [showResurveyInput, setShowResurveyInput] = useState<boolean>(false);
 
   const refreshList = () => {
     const list = DataService.getProjects();
@@ -110,215 +84,106 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
     }
   };
 
-  const stages: ('All' | InstallationStage)[] = [
+  useEffect(() => {
+    const handleUpdate = () => refreshList();
+    window.addEventListener('sunpower_data_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('sunpower_data_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [activeProject?.id]);
+
+  const stages: ('All' | ProjectLifecycleStage)[] = [
     'All',
-    'Survey Pending',
-    'Survey Completed',
-    'Material Ready',
-    'Installation Scheduled',
-    'Installation In Progress',
-    'Completed'
+    'Order Placed',
+    'Survey Assigned',
+    'Survey In Progress',
+    'Survey Submitted',
+    'Feasibility Approved',
+    'Hardware Dispatched',
+    'Installation & Handover Completed',
+    'Commissioned & Closed'
   ];
 
-  const handleStageAdvance = (targetStage: InstallationStage) => {
+  // 1. Director Action: Assign Technician
+  const handleAssignTechnicianSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!activeProject) return;
-    const updated = DataService.updateProjectStage(activeProject.id, targetStage);
-    if (updated) {
-      showToast(`Project stage updated to "${targetStage}".`, 'success');
-      refreshList();
-    }
-  };
 
-  const handleAssignTechnician = (techId: string) => {
-    if (!activeProject) return;
-    const tech = TECHNICIANS.find(t => t.id === techId);
-    if (!tech) return;
-
-    const updated = DataService.saveProject({
-      id: activeProject.id,
-      technicianId: tech.id,
-      technicianName: tech.name
-    });
-    if (updated) {
-      showToast(`Technician ${tech.name} assigned to project.`, 'success');
-      refreshList();
-    }
-  };
-
-  const handleUpdateSchedule = (surveyDate: string, installDate: string) => {
-    if (!activeProject) return;
-    const updated = DataService.saveProject({
-      id: activeProject.id,
-      surveyDate,
-      installationDate: installDate
-    });
-    if (updated) {
-      showToast('Project survey & installation dates saved.', 'success');
-      refreshList();
-    }
-  };
-
-  // Add serial number to project & auto-register to warranty system
-  const handleAddSerialNumber = () => {
-    if (!activeProject) return;
-    if (!newSerialValue.trim()) {
-      showToast('Please enter a product serial number.', 'error');
+    if (!assignTechId) {
+      showToast('Please select a field technician.', 'warning');
       return;
     }
 
-    const serial = newSerialValue.trim().toUpperCase();
+    const success = DataService.assignTechnicianToSurvey(
+      activeProject.id,
+      assignTechId,
+      assignSurveyDate,
+      assignNotes
+    );
 
-    // Determine warranty years (strict rule: 20 yrs panels, 2 yrs inverter/battery)
-    let warrantyYears = 1;
-    if (newSerialCategory === 'Solar Panels') warrantyYears = 20;
-    else if (newSerialCategory === 'Inverters' || newSerialCategory === 'Batteries') warrantyYears = 2;
-
-    // Check if category already has an entry in installedProducts
-    const existing = [...activeProject.installedProducts];
-    const catIndex = existing.findIndex(e => e.productCategory === newSerialCategory);
-
-    if (catIndex >= 0) {
-      if (!existing[catIndex].serialNumbers.includes(serial)) {
-        existing[catIndex].serialNumbers.push(serial);
-      }
+    if (success) {
+      showToast('Technician assigned! Project stage updated to "Survey Assigned" and task dispatched.', 'success');
+      refreshList();
     } else {
-      existing.push({
-        id: `IP-${Date.now()}`,
-        productCategory: newSerialCategory,
-        productName: newSerialProductName,
-        model: 'Standard Tier',
-        serialNumbers: [serial],
-        deliveryDate: deliveryDate,
-        warrantyYears
-      });
-    }
-
-    // Register into Warranty service automatically
-    DataService.registerWarranty({
-      serialNumber: serial,
-      productCategory: newSerialCategory,
-      productName: newSerialProductName,
-      model: 'Certified OEM Unit',
-      customerId: activeProject.customerId,
-      customerName: activeProject.customerName,
-      customerPhone: activeProject.customerPhone,
-      customerAddress: activeProject.customerAddress,
-      projectId: activeProject.projectId,
-      deliveryDate: deliveryDate,
-      warrantyYears
-    });
-
-    const updated = DataService.saveProject({
-      id: activeProject.id,
-      installedProducts: existing
-    });
-
-    if (updated) {
-      showToast(`Serial ${serial} recorded & ${warrantyYears}-year warranty certificate registered!`, 'success');
-      setNewSerialValue('');
-      refreshList();
+      showToast('Failed to assign technician.', 'error');
     }
   };
 
-  // Add installation photo
-  const handleAddPhoto = () => {
+  // 2. Director Action: Approve Feasibility
+  const handleApproveFeasibility = () => {
     if (!activeProject) return;
 
-    // Use our high-fidelity generated images
-    const sampleUrls = [
-      '/src/assets/images/solar_rooftop_installation_1793436857441.jpg',
-      '/src/assets/images/solar_inverter_battery_setup_1793436858572.jpg',
-      '/src/assets/images/solar_technician_survey_1793436857911.jpg'
-    ];
-    const chosenUrl = sampleUrls[activeProject.photos.length % sampleUrls.length];
+    const success = DataService.approveFeasibilityReport(
+      activeProject.id,
+      directorApprovalNotes
+    );
 
-    const newPhoto: InstallationPhoto = {
-      id: `PH-${Date.now()}`,
-      url: chosenUrl,
-      caption: newPhotoCaption.trim() || `${newPhotoPhase} photo logged by technician`,
-      uploadedAt: new Date().toISOString(),
-      phase: newPhotoPhase
-    };
-
-    const updated = DataService.saveProject({
-      id: activeProject.id,
-      photos: [...activeProject.photos, newPhoto]
-    });
-
-    if (updated) {
-      showToast('Installation photograph verified & added to site file.', 'success');
-      setNewPhotoCaption('');
+    if (success) {
+      showToast('Feasibility Approved! Order unlocked in Warehouse for material dispatch.', 'success');
       refreshList();
+    } else {
+      showToast('Failed to approve feasibility report.', 'error');
     }
   };
 
-  // Signature canvas handlers
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.strokeStyle = '#292724';
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = 'round';
-    setIsDrawing(true);
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.stroke();
-    setHasSignature(true);
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setHasSignature(false);
-  };
-
-  const handleSaveApproval = () => {
+  // 3. Director Action: Request Re-survey
+  const handleRequestResurvey = () => {
     if (!activeProject) return;
-    if (!hasSignature && !signatoryName.trim()) {
-      showToast('Please sign or enter customer signatory name.', 'error');
+
+    if (!resurveyReason.trim()) {
+      showToast('Please enter the reason for requesting a re-survey.', 'warning');
       return;
     }
 
-    const updated = DataService.saveProject({
-      id: activeProject.id,
-      customerApproved: true,
-      approvalSignature: signatoryName.trim() || `${activeProject.customerName} (Digital Signature Captured)`,
-      approvalDate: new Date().toISOString().split('T')[0],
-      stage: 'Completed',
-      progressPercent: 100
-    });
-
-    if (updated) {
-      showToast(`Customer handover approved & project marked Completed!`, 'success');
+    const success = DataService.requestResurvey(activeProject.id, resurveyReason);
+    if (success) {
+      showToast('Re-survey requested! Project stage returned to "Survey Assigned" for technician review.', 'info');
+      setShowResurveyInput(false);
+      setResurveyReason('');
       refreshList();
+    } else {
+      showToast('Failed to request re-survey.', 'error');
+    }
+  };
+
+  // 4. Director Action: Approve Commissioning & Close Project
+  const handleApproveCommissioning = () => {
+    if (!activeProject) return;
+
+    const success = DataService.approveCommissioningAndClose(activeProject.id);
+    if (success) {
+      showToast('Project commissioned and closed! 20-Year warranty certificate active and customer dashboard energized.', 'success');
+      refreshList();
+    } else {
+      showToast('Failed to close project.', 'error');
     }
   };
 
   // Filtered projects
   const filteredProjects = projects.filter(p => {
-    const matchesSearch = 
+    const matchesSearch =
       p.projectId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.technicianName && p.technicianName.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -328,10 +193,10 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       {/* Search & Filter Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2 flex-1 max-w-xl">
+        <div className="flex flex-wrap items-center gap-2 flex-1 max-w-2xl">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -348,9 +213,9 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
               <button
                 key={st}
                 onClick={() => setSelectedStage(st)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all whitespace-nowrap ${
+                className={`px-2.5 py-1.5 text-[11px] font-medium rounded-lg border transition-all whitespace-nowrap ${
                   selectedStage === st
-                    ? 'bg-slate-900 text-white border-slate-900'
+                    ? 'bg-slate-900 text-white border-slate-900 font-bold'
                     : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -363,17 +228,12 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => {
-              if (onOpenSiteSurvey) {
-                onOpenSiteSurvey();
-              } else {
-                setIsSurveyModalOpen(true);
-              }
+              onNavigateTab('warehouse');
             }}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-slate-100 text-slate-900 text-xs font-semibold hover:bg-slate-100 transition-all shadow-xs shrink-0"
-            title="Record rooftop azimuth, tilt, shading, and earthing test"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold hover:bg-slate-100 transition-all shadow-xs shrink-0"
           >
-            <Compass className="w-4 h-4 text-[#C66B45]" />
-            <span>{currentRole === "manager" || currentRole === "director" ? "View Site Surveys" : "Conduct Technical Survey"}</span>
+            <Truck className="w-4 h-4 text-[#C66B45]" />
+            <span>Warehouse Staging</span>
           </button>
 
           <button
@@ -401,7 +261,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                 <th className="py-3 px-4">Assigned Crew</th>
                 <th className="py-3 px-4">Current Stage</th>
                 <th className="py-3 px-4 w-36">Progress</th>
-                <th className="py-3 px-4">Schedule</th>
+                <th className="py-3 px-4">Scheduled Date</th>
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
@@ -448,20 +308,19 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                           <div
-                            className="h-full bg-[#C66B45] rounded-full transition-all"
+                            className="bg-[#C66B45] h-full rounded-full transition-all"
                             style={{ width: `${proj.progressPercent}%` }}
                           />
                         </div>
-                        <span className="font-mono text-[11px] font-bold text-slate-900">
+                        <span className="font-mono text-[11px] text-slate-500 w-8 text-right">
                           {proj.progressPercent}%
                         </span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600">
-                      <div>Survey: {proj.surveyDate || 'TBD'}</div>
-                      <div>Install: {proj.installationDate || 'TBD'}</div>
+                    <td className="py-3.5 px-4 font-mono text-slate-600">
+                      {proj.surveyDate || proj.installationDate || 'Pending Schedule'}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <button
@@ -469,9 +328,9 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                           e.stopPropagation();
                           setActiveProject(proj);
                         }}
-                        className="px-2.5 py-1 text-[11px] font-semibold bg-slate-50 hover:bg-slate-200 text-slate-900 rounded border border-slate-200 transition-colors"
+                        className="px-2.5 py-1 rounded text-xs font-semibold text-[#C66B45] hover:bg-amber-50 transition-colors"
                       >
-                        Manage Project
+                        Manage &rarr;
                       </button>
                     </td>
                   </tr>
@@ -482,416 +341,480 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
         </div>
       </div>
 
-      {/* Project Execution & Management Modal */}
+      {/* =======================================================================
+          DIRECTOR PROJECT ORCHESTRATION & APPROVAL MODAL
+          ======================================================================= */}
       {activeProject && (
         <Modal
           isOpen={!!activeProject}
           onClose={() => setActiveProject(null)}
-          title={`Project Management: ${activeProject.projectId} – ${activeProject.customerName}`}
-          subtitle={`${activeProject.capacityKw} kW ${activeProject.systemType} · Stage: ${activeProject.stage}`}
+          title={`Project Management: ${activeProject.projectId} — ${activeProject.customerName}`}
           maxWidth="4xl"
         >
-          <div className="space-y-6 text-xs">
-                        {/* Technical Feasibility Survey Callout Banner */}
-            <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#C66B45] text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Compass className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-xs">Technical Feasibility Site Survey</h4>
-                  <p className="text-[11px] text-slate-600">
-                    {activeProject.stage === 'Survey Completed'
-                      ? `Feasibility survey verified: ${activeProject.approvalNotes || 'Azimuth & Tilt cleared.'}`
-                      : 'Record rooftop azimuth, tilt angle, shadow analysis and earthing Ohms test.'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSurveyModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 shrink-0 transition-colors shadow-xs"
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>{currentRole === 'manager' || currentRole === 'director' ? 'Review & Approve Survey' : activeProject.stage === 'Survey Completed' ? 'Review Survey Details' : 'Launch Site Survey'}</span>
-              </button>
-            </div>\n\n            {/* Stage Progression Bar */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900 text-xs">Workflow Milestones</span>
-                <span className="font-mono font-bold text-xs text-[#C66B45]">{activeProject.progressPercent}% Complete</span>
+          <div className="space-y-6 text-xs font-sans">
+            {/* Top Overview Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">System Capacity</span>
+                <p className="font-mono font-bold text-sm text-slate-900 mt-0.5">
+                  {activeProject.capacityKw} kW
+                </p>
+                <span className="text-[10px] text-slate-500">{activeProject.systemType} Tier</span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center text-[10px]">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Assigned Lead Crew</span>
+                <p className="font-semibold text-sm text-slate-900 mt-0.5 truncate">
+                  {activeProject.technicianName || 'Unassigned'}
+                </p>
+                <span className="text-[10px] text-slate-500">
+                  {activeProject.technicianId ? 'Field Crew Dispatched' : 'Requires Assignment'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Current Lifecycle Stage</span>
+                <div className="mt-1">
+                  <StatusBadge status={activeProject.stage} type="stage" />
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Execution Progress</span>
+                <p className="font-mono font-bold text-sm text-[#C66B45] mt-0.5">
+                  {activeProject.progressPercent}% Complete
+                </p>
+                <div className="w-full bg-slate-200 h-1 rounded-full mt-1 overflow-hidden">
+                  <div className="bg-[#C66B45] h-full" style={{ width: `${activeProject.progressPercent}%` }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Lifecycle Stages Flow Indicator */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-900">
+                <span>Unified 8-Stage Lifecycle Progress:</span>
+                <span className="text-[#C66B45] font-mono">{activeProject.stage}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[10px]">
                 {[
-                  'Survey Pending',
-                  'Survey Completed',
-                  'Material Ready',
-                  'Installation Scheduled',
-                  'Installation In Progress',
-                  'Completed'
-                ].map((st, idx) => {
-                  const isCurrent = activeProject.stage === st;
-                  const isPast = activeProject.progressPercent >= (idx + 1) * 16.6;
-
+                  { s: 'Order Placed', num: 1 },
+                  { s: 'Survey Assigned', num: 2 },
+                  { s: 'Survey Submitted', num: 3 },
+                  { s: 'Feasibility Approved', num: 4 },
+                  { s: 'Hardware Dispatched', num: 5 },
+                  { s: 'Installation & Handover Completed', num: 6 },
+                  { s: 'Commissioned & Closed', num: 7 }
+                ].map((step) => {
+                  const isCurrent = activeProject.stage === step.s;
                   return (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => handleStageAdvance(st as InstallationStage)}
-                      className={`p-2 rounded-lg border text-left transition-all ${
+                    <div
+                      key={step.s}
+                      className={`p-2 rounded-lg border transition-all ${
                         isCurrent
-                          ? 'bg-[#C66B45] text-white border-[#C66B45] font-bold shadow-xs'
-                          : isPast
-                          ? 'bg-slate-900 text-white border-slate-900'
-                          : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          ? 'bg-[#C66B45] text-white font-bold border-[#C66B45] shadow-xs'
+                          : 'bg-white text-slate-600 border-slate-200'
                       }`}
                     >
-                      <div className="font-mono text-[9px] opacity-80">Stage 0{idx + 1}</div>
-                      <div className="leading-tight mt-0.5 truncate">{st}</div>
-                    </button>
+                      <span className="opacity-70 text-[9px] block">Stage {step.num}</span>
+                      <span className="truncate block font-semibold">{step.s}</span>
+                    </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Crew & Schedule Controls */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-white border border-slate-200">
-              <div>
-                <label className="block font-semibold text-slate-900 mb-1">
-                  Assigned Lead Technician
-                </label>
-                <select
-                  value={activeProject.technicianId || ''}
-                  onChange={(e) => handleAssignTechnician(e.target.value)}
-                  className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-300"
-                >
-                  <option value="">Select Technician...</option>
-                  {TECHNICIANS.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.activeProjects} Active Projects)
-                    </option>
-                  ))}
-                </select>
-                {activeProject.technicianName && (
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Phone: {TECHNICIANS.find(t => t.id === activeProject.technicianId)?.phone}
-                  </p>
-                )}
-              </div>
+            {/* ===================================================================
+                STAGE SPECIFIC WORKFLOW CONTROLS (DIRECTOR OVERSIGHT ONLY)
+                =================================================================== */}
 
-              <div>
-                <label className="block font-semibold text-slate-900 mb-1">
-                  Site Feasibility Survey Date
-                </label>
-                <input
-                  type="date"
-                  value={activeProject.surveyDate || ''}
-                  onChange={(e) => handleUpdateSchedule(e.target.value, activeProject.installationDate || '')}
-                  className="w-full p-2 rounded-lg border border-slate-200 bg-white font-mono text-slate-900 focus:outline-none focus:border-slate-300"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-900 mb-1">
-                  Execution & Commissioning Date
-                </label>
-                <input
-                  type="date"
-                  value={activeProject.installationDate || ''}
-                  onChange={(e) => handleUpdateSchedule(activeProject.surveyDate || '', e.target.value)}
-                  className="w-full p-2 rounded-lg border border-slate-200 bg-white font-mono text-slate-900 focus:outline-none focus:border-slate-300"
-                />
-              </div>
-            </div>
-
-            {/* Equipment Serials Recorder & Installed Hardware */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-900 text-xs">Installed Equipment & Serial Tracking</span>
-                  <p className="text-[11px] text-slate-600">
-                    Serial numbers registered here automatically sync with the 20-Year (Panels) and 2-Year (Inverter/Battery) Warranty Registry.
-                  </p>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-900 font-semibold text-[10px]">
-                  Automatic Warranty Sync
-                </span>
-              </div>
-
-              {/* Serial Entry Form */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-900 mb-1">Equipment Category</label>
-                  <select
-                    value={newSerialCategory}
-                    onChange={(e) => {
-                      const cat = e.target.value as any;
-                      setNewSerialCategory(cat);
-                      if (cat === 'Solar Panels') setNewSerialProductName('Waaree 545W Mono PERC Panel');
-                      else if (cat === 'Inverters') setNewSerialProductName('Growatt / Deye Solar Inverter');
-                      else setNewSerialProductName('Exide LiFePO4 Battery Bank');
-                    }}
-                    className="w-full p-1.5 rounded border border-slate-200 bg-white text-[11px]"
-                  >
-                    <option value="Solar Panels">Solar Panels (20 Yrs)</option>
-                    <option value="Inverters">Inverters (2 Yrs)</option>
-                    <option value="Batteries">Batteries (2 Yrs)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-900 mb-1">Product Model / Label</label>
-                  <input
-                    type="text"
-                    value={newSerialProductName}
-                    onChange={(e) => setNewSerialProductName(e.target.value)}
-                    className="w-full p-1.5 rounded border border-slate-200 bg-white text-[11px]"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-  <label className="block text-[11px] font-semibold text-slate-900">Serial Number Code</label>
-  <button
-    type="button"
-    onClick={() => setIsScannerModalOpen(true)}
-    className="text-[10px] font-bold text-[#C66B45] hover:underline flex items-center gap-1"
-  >
-    <Scan className="w-3 h-3" />
-    <span>Serial Number Scan</span>
-  </button>
-</div>
-                  <input
-                    type="text"
-                    value={newSerialValue}
-                    onChange={(e) => setNewSerialValue(e.target.value)}
-                    placeholder="e.g. SP-WAR-8841-2026"
-                    className="w-full p-1.5 rounded border border-slate-200 bg-white font-mono text-[11px]"
-                  />
-                </div>
-
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={handleAddSerialNumber}
-                    className="w-full py-1.5 px-3 rounded bg-[#C66B45] text-white font-semibold hover:bg-[#C66B45]/90 text-[11px]"
-                  >
-                    + Register Serial
-                  </button>
-                </div>
-              </div>
-
-              {/* Display Installed equipment */}
-              <div className="space-y-2">
-                {activeProject.installedProducts.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-lg">
-                    No hardware serial numbers attached yet. Record serials during material dispatch or site mounting.
-                  </p>
-                ) : (
-                  activeProject.installedProducts.map(p => (
-                    <div key={p.id} className="p-3 rounded-lg border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900">{p.productCategory}:</span>
-                          <span>{p.productName}</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 font-semibold">
-                            {p.warrantyYears} Years Warranty
-                          </span>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-1.5">
-                          {p.serialNumbers.map(s => (
-                            <span key={s} className="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 font-mono text-[11px] font-bold text-slate-900">
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="text-[11px] text-slate-500">
-                        Delivered: {p.deliveryDate}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Site Photographs & Gallery */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-900 text-xs">Site Installation Photographs ({activeProject.photos.length})</span>
-                  <p className="text-[11px] text-slate-600">Visual evidence of mounting structures, DC cable dressing, inverter commissioning & net meter.</p>
-                </div>
-              </div>
-
-              {/* Add Photo Form */}
-              <div className="flex flex-col sm:flex-row gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                <select
-                  value={newPhotoPhase}
-                  onChange={(e) => setNewPhotoPhase(e.target.value as any)}
-                  className="p-1.5 rounded border border-slate-200 bg-white text-[11px]"
-                >
-                  <option value="Survey">Site Survey Phase</option>
-                  <option value="Mounting">Rooftop Mounting Phase</option>
-                  <option value="Wiring">DC Conduit & Inverter Wiring</option>
-                  <option value="Completion">Final Commissioning</option>
-                </select>
-
-                <input
-                  type="text"
-                  value={newPhotoCaption}
-                  onChange={(e) => setNewPhotoCaption(e.target.value)}
-                  placeholder="Enter photo description (e.g. 18x Monocrystalline Array with Lightning Arrestor)"
-                  className="flex-1 p-1.5 rounded border border-slate-200 bg-white text-[11px]"
-                />
-
-                <button
-                  type="button"
-                  onClick={handleAddPhoto}
-                  className="px-4 py-1.5 rounded bg-slate-900 text-white font-semibold text-[11px] flex items-center justify-center gap-1.5"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Attach Site Photo</span>
-                </button>
-              </div>
-
-              {/* Photo Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {activeProject.photos.map(photo => (
-                  <div key={photo.id} className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
-                    <div className="relative aspect-video bg-slate-900 overflow-hidden">
-                      <img
-                        src={photo.url}
-                        alt={photo.caption}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-900/80 text-white backdrop-blur-xs">
-                        {photo.phase} Phase
-                      </span>
-                    </div>
-                    <div className="p-3">
-                      <p className="font-semibold text-slate-900 text-xs">{photo.caption}</p>
-                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        Logged on {new Date(photo.uploadedAt).toLocaleDateString()} by Field Crew
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Customer Handover Approval & Signature Capture */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-900 text-xs">Customer Handover & Digital Acceptance</span>
-                  <p className="text-[11px] text-slate-600">Capture customer physical touch signature upon system live testing and generation verification.</p>
-                </div>
-                {activeProject.customerApproved && (
-                  <span className="px-2.5 py-1 rounded-md bg-slate-900 text-white font-semibold text-xs flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Customer Approved & Signed</span>
-                  </span>
-                )}
-              </div>
-
-              {activeProject.customerApproved ? (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <p className="font-bold text-sm text-slate-900">
-                    Handover Approved by: {activeProject.approvalSignature}
-                  </p>
-                  <p className="text-xs text-slate-600">
-                    Handover Date: {activeProject.approvalDate} · Generation tested and verified.
-                  </p>
-                  {activeProject.approvalNotes && (
-                    <p className="text-xs text-slate-700 italic">
-                      Remarks: "{activeProject.approvalNotes}"
+            {/* 1. STAGE: Order Placed -> Director Assigns Technician with explicit Button */}
+            {activeProject.stage === 'Order Placed' && (
+              <div className="p-5 rounded-xl border border-amber-200 bg-amber-50/50 space-y-4">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-[#C66B45]" />
+                  <div>
+                    <h4 className="font-bold text-sm text-[#292724]">
+                      Dispatch Field Feasibility Survey
+                    </h4>
+                    <p className="text-[11px] text-slate-600">
+                      Select an available field technician to conduct on-site rooftop measurement, azimuth test, and structural inspection.
                     </p>
-                  )}
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
+
+                <form onSubmit={handleAssignTechnicianSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block font-semibold text-slate-900 mb-1">
-                        Signatory Name / Representative
+                        Select Lead Field Technician:
                       </label>
-                      <input
-                        type="text"
-                        value={signatoryName}
-                        onChange={(e) => setSignatoryName(e.target.value)}
-                        placeholder={`e.g. ${activeProject.customerName}`}
-                        className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-900 text-xs"
-                      />
+                      <select
+                        value={assignTechId}
+                        onChange={(e) => setAssignTechId(e.target.value)}
+                        className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#C66B45]"
+                        required
+                      >
+                        {TECHNICIANS.map(t => (
+                          <option key={t.id} value={t.id}>
+                            {t.name} ({t.activeProjects} active projects) — {t.phone}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
-                    <div className="flex items-end justify-end">
-                      <button
-                        type="button"
-                        onClick={clearSignature}
-                        className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1 p-2"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Clear Pad</span>
-                      </button>
+                    <div>
+                      <label className="block font-semibold text-slate-900 mb-1">
+                        Scheduled Survey Date:
+                      </label>
+                      <input
+                        type="date"
+                        value={assignSurveyDate}
+                        onChange={(e) => setAssignSurveyDate(e.target.value)}
+                        className="w-full p-2.5 rounded-lg border border-slate-200 bg-white font-mono text-slate-900 text-xs focus:outline-none focus:border-[#C66B45]"
+                        required
+                      />
                     </div>
                   </div>
 
-                  {/* Interactive Signature Canvas Pad */}
-                  <div className="border border-slate-200 rounded-xl bg-slate-50 p-2">
-                    <canvas
-                      ref={canvasRef}
-                      width={650}
-                      height={130}
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
-                      className="w-full bg-white rounded-lg border border-slate-200 cursor-crosshair touch-none"
+                  <div>
+                    <label className="block font-semibold text-slate-900 mb-1">
+                      Director Survey Instructions / Special Notes:
+                    </label>
+                    <textarea
+                      value={assignNotes}
+                      onChange={(e) => setAssignNotes(e.target.value)}
+                      rows={2}
+                      className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 text-xs focus:outline-none focus:border-[#C66B45]"
+                      placeholder="Special instructions for field crew (e.g. Roof access via side staircase, check water tank shadow)..."
                     />
-                    <p className="text-[10px] text-slate-400 text-center mt-1">
-                      Sign above using your finger, stylus or mouse
-                    </p>
                   </div>
 
                   <div className="flex justify-end pt-2">
                     <button
+                      type="submit"
+                      className="px-5 py-2.5 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-md shadow-[#C66B45]/20 flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>Assign Technician & Dispatch Survey</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* 2. STAGE: Survey Assigned or Survey In Progress */}
+            {(activeProject.stage === 'Survey Assigned' || activeProject.stage === 'Survey In Progress') && (
+              <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/60 flex items-start gap-3">
+                <Clock className="w-5 h-5 text-sky-700 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="font-bold text-sm text-sky-900">
+                    Survey Dispatched to {activeProject.technicianName}
+                  </h4>
+                  <p className="text-xs text-sky-800">
+                    Scheduled Date: <strong className="font-mono">{activeProject.surveyDate || 'Pending visit'}</strong>.
+                  </p>
+                  <p className="text-[11px] text-sky-700">
+                    The field technician is conducting on-site tilt angle, azimuth orientation, and shading obstacle analysis. Awaiting Feasibility Report submission.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 3. STAGE: Survey Submitted -> Director Reviews Read-Only Report & Approves or Requests Re-survey */}
+            {activeProject.stage === 'Survey Submitted' && (
+              <div className="p-5 rounded-xl border border-blue-200 bg-blue-50/40 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-sm text-[#292724] flex items-center gap-1.5">
+                      <FileCheck className="w-4 h-4 text-[#C66B45]" />
+                      <span>Technical Feasibility Report for Verification</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">
+                      Submitted by: <strong className="text-slate-900">{activeProject.feasibilityReport?.surveyorName || activeProject.technicianName}</strong> on {activeProject.feasibilityReport?.surveyDate || 'Today'}
+                    </p>
+                  </div>
+
+                  <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                    Pending Director Approval
+                  </span>
+                </div>
+
+                {/* Read-Only Technical Feasibility Measurements */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-white border border-slate-200 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Roof Type</span>
+                    <span className="font-semibold text-slate-900">{activeProject.feasibilityReport?.roofType || 'Concrete Flat'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Tilt Angle</span>
+                    <span className="font-mono font-bold text-slate-900">{activeProject.feasibilityReport?.tiltAngleDeg || 22}°</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Azimuth</span>
+                    <span className="font-semibold text-slate-900">{activeProject.feasibilityReport?.azimuthOrientation || 'South-Facing (Optimal)'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Earthing Pit</span>
+                    <span className="font-mono font-bold text-slate-900">{activeProject.feasibilityReport?.earthingResistanceOhms || 2.4} Ω</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Shading Analysis</span>
+                    <span className="font-semibold text-slate-900">
+                      {activeProject.feasibilityReport?.shadingObstacles ? 'Obstacles Identified' : 'Clean Horizon (No Obstacles)'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Technician Verdict</span>
+                    <span className="font-bold text-emerald-700">{activeProject.feasibilityReport?.verdict || 'Feasible'}</span>
+                  </div>
+                </div>
+
+                {/* Shading Notes */}
+                {activeProject.feasibilityReport?.shadingNotes && (
+                  <div className="p-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-700">
+                    <strong className="block text-slate-900 mb-0.5">Technician Shading & Site Remarks:</strong>
+                    {activeProject.feasibilityReport.shadingNotes}
+                  </div>
+                )}
+
+                {/* Site Photos Submitted by Technician */}
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-slate-900 block">Attached Site Feasibility Photographs:</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(activeProject.feasibilityReport?.photos || [
+                      '/src/assets/images/solar_rooftop_installation_1793436857441.jpg',
+                      '/src/assets/images/solar_technician_survey_1793436857911.jpg'
+                    ]).map((url, idx) => (
+                      <div key={idx} className="rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-900">
+                        <img src={url} alt={`Site photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Director Verification Controls */}
+                <div className="space-y-3 pt-2 border-t border-blue-200/60">
+                  <div>
+                    <label className="block font-semibold text-slate-900 mb-1">
+                      Director Approval Remarks:
+                    </label>
+                    <input
+                      type="text"
+                      value={directorApprovalNotes}
+                      onChange={(e) => setDirectorApprovalNotes(e.target.value)}
+                      className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 text-xs"
+                      placeholder="e.g. Feasibility parameters verified. Rooftop tilt and orientation approved for installation."
+                    />
+                  </div>
+
+                  {showResurveyInput && (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 space-y-2">
+                      <label className="block font-bold text-xs text-amber-900">
+                        Reason for Requesting Re-survey:
+                      </label>
+                      <textarea
+                        value={resurveyReason}
+                        onChange={(e) => setResurveyReason(e.target.value)}
+                        rows={2}
+                        placeholder="Specify what needs re-measuring (e.g. Earthing resistance too high, need alternate azimuth)..."
+                        className="w-full p-2 text-xs rounded-lg border border-amber-300 bg-white text-slate-900"
+                        required
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowResurveyInput(false)}
+                          className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRequestResurvey}
+                          className="px-4 py-1.5 rounded-lg bg-amber-600 text-white font-bold text-xs hover:bg-amber-700"
+                        >
+                          Confirm Re-survey Request
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end gap-3 pt-1">
+                    {!showResurveyInput && (
+                      <button
+                        type="button"
+                        onClick={() => setShowResurveyInput(true)}
+                        className="px-4 py-2.5 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        Request Re-survey
+                      </button>
+                    )}
+
+                    <button
                       type="button"
-                      onClick={handleSaveApproval}
-                      className="px-5 py-2.5 rounded-lg bg-[#C66B45] text-white font-bold text-xs hover:bg-[#C66B45]/90 shadow-sm flex items-center gap-2"
+                      onClick={handleApproveFeasibility}
+                      className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Approve Handover & Mark Project Completed</span>
+                      <span>Approve Feasibility & Unlock Warehouse Dispatch</span>
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* 4. STAGE: Feasibility Approved -> Warehouse Unlocked */}
+            {activeProject.stage === 'Feasibility Approved' && (
+              <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/60 flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-sm text-emerald-900">
+                      Feasibility Approved — Awaiting Warehouse Staging
+                    </h4>
+                    <p className="text-xs text-emerald-800 mt-0.5">
+                      The Bill of Materials (BOM) has been released to the warehouse. Warehouse personnel will assign equipment serial numbers and dispatch hardware.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveProject(null);
+                    onNavigateTab('warehouse');
+                  }}
+                  className="px-4 py-2 rounded-lg bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 flex items-center gap-1.5 shrink-0 transition-colors"
+                >
+                  <Truck className="w-4 h-4" />
+                  <span>Go to Warehouse Queue</span>
+                </button>
+              </div>
+            )}
+
+            {/* 5. STAGE: Hardware Dispatched */}
+            {activeProject.stage === 'Hardware Dispatched' && (
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-5 h-5 text-[#C66B45]" />
+                    <h4 className="font-bold text-sm text-slate-900">Hardware Dispatched by Warehouse</h4>
+                  </div>
+                  <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                    Field Mounting In Progress
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                    <span className="text-[10px] font-sans text-slate-500 block">PV Batch:</span>
+                    <strong className="text-slate-900 text-[11px]">{activeProject.hardwareDispatch?.moduleSerials || 'PV-WA-540-9901..9920'}</strong>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                    <span className="text-[10px] font-sans text-slate-500 block">Inverter Serial:</span>
+                    <strong className="text-slate-900 text-[11px]">{activeProject.hardwareDispatch?.inverterSerial || 'INV-GW-5000-8831'}</strong>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                    <span className="text-[10px] font-sans text-slate-500 block">Battery Unit:</span>
+                    <strong className="text-slate-900 text-[11px]">{activeProject.hardwareDispatch?.batterySerial || 'BAT-PY-48100-2401'}</strong>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Technician is executing on-site installation, testing output kW, and collecting customer digital acceptance signature.
+                </p>
+              </div>
+            )}
+
+            {/* 6. STAGE: Installation & Handover Completed -> Director Final Commissioning Sign-off */}
+            {activeProject.stage === 'Installation & Handover Completed' && (
+              <div className="p-5 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-sm text-[#292724] flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-[#C66B45]" />
+                      <span>Installation Handover Verification & Final Commissioning</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mt-0.5">
+                      Field technician has submitted live power test and customer digital acceptance. Ready for Director project closure.
+                    </p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Ready to Close
+                  </span>
+                </div>
+
+                {/* Handover Data Submitted by Technician */}
+                <div className="grid grid-cols-2 gap-3 p-4 rounded-xl bg-white border border-slate-200 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Measured Power Output</span>
+                    <span className="font-mono font-bold text-base text-slate-900">
+                      {activeProject.commissioningData?.testPowerOutputKw || 9.8} kW Verified
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Customer Digital Acceptance</span>
+                    <span className="font-bold text-slate-900">
+                      {activeProject.commissioningData?.signatoryName || activeProject.customerName} (Signed & Verified)
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2 Post-Installation Photos */}
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-slate-900 block">Post-Installation Photos (Array & Inverter):</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(activeProject.commissioningData?.photos || [
+                      '/src/assets/images/solar_rooftop_installation_1793436857441.jpg',
+                      '/src/assets/images/solar_inverter_battery_setup_1793436858572.jpg'
+                    ]).map((url, idx) => (
+                      <div key={idx} className="rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-900">
+                        <img src={url} alt={`Installed setup ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Director Final Sign-off Button */}
+                <div className="flex justify-end pt-2 border-t border-emerald-200/60">
+                  <button
+                    type="button"
+                    onClick={handleApproveCommissioning}
+                    className="px-6 py-3 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-lg shadow-[#C66B45]/25 flex items-center gap-2 transition-all cursor-pointer"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Approve Commissioning & Close Project</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 7. STAGE: Commissioned & Closed */}
+            {activeProject.stage === 'Commissioned & Closed' && (
+              <div className="p-5 rounded-xl border border-emerald-300 bg-emerald-50/80 space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+                  <h4 className="font-bold text-sm text-emerald-900">Project Commissioned & Closed</h4>
+                </div>
+                <p className="text-xs text-emerald-800">
+                  Turnkey installation energized on the DISCOM grid. 20-Year module warranty and 2-Year inverter/battery warranty are actively tracking.
+                </p>
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveProject(null);
+                      onNavigateTab('warranties');
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-700 text-white font-semibold text-xs hover:bg-emerald-800 transition-colors"
+                  >
+                    View Active Warranty Certificates
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}
-
-      {/* Technical Site Survey Gate Modal */}
-      {activeProject && (
-        <SiteSurveyModal
-          isOpen={isSurveyModalOpen}
-          onClose={() => setIsSurveyModalOpen(false)}
-          onSubmit={handleSaveSurvey}
-          customerName={activeProject.customerName}
-          address={activeProject.customerAddress}
-        />
-      )}
-
-      {/* Serial Number Scan Modal */}
-      <SerialNumberScanModal
-        isOpen={isScannerModalOpen}
-        onClose={() => setIsScannerModalOpen(false)}
-        onScan={handleScannedSerial}
-        targetItemName={newSerialProductName}
-        expectedCategory={newSerialCategory}
-      />
     </div>
   );
 };
