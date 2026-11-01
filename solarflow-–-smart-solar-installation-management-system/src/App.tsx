@@ -305,6 +305,7 @@ function AppContent() {
             <ServiceTicketsPage
               onNavigateTab={handleNavigate}
               initialTicketIdOrSerial={targetId}
+              currentRole={currentRole}
             />
           )}
 

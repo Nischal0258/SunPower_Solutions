@@ -1718,6 +1718,29 @@ export class DataService {
     return t;
   }
 
+  public static assignTicketTechnician(id: string, technicianId: string, technicianName: string, visitDate?: string): ServiceTicket | undefined {
+    const data = this.load();
+    const t = data.tickets.find(ticket => ticket.id === id);
+    if (!t) return undefined;
+
+    t.assignedTechnicianId = technicianId;
+    t.assignedTechnicianName = technicianName;
+    if (visitDate) t.scheduledVisitDate = visitDate;
+    t.status = 'Assigned';
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'service',
+      title: `${t.ticketNumber} Assigned to ${technicianName}`,
+      description: `Scheduled Visit: ${visitDate || 'Standard Window'}`,
+      timestamp: 'Just now',
+      actor: 'Support Agent'
+    });
+
+    this.save(data);
+    return t;
+  }
+
   // Tasks
   public static getTasks(): BusinessTask[] {
     return this.load().tasks;
