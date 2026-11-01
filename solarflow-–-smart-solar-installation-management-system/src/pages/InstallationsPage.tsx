@@ -74,6 +74,15 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
   const [directorApprovalNotes, setDirectorApprovalNotes] = useState<string>('Feasibility parameters verified. Rooftop tilt and orientation approved for installation.');
   const [resurveyReason, setResurveyReason] = useState<string>('');
   const [showResurveyInput, setShowResurveyInput] = useState<boolean>(false);
+  const [showReassign, setShowReassign] = useState<boolean>(false);
+
+  // Sync active project whenever initialProjectId prop changes (e.g., navigating from Dashboard)
+  useEffect(() => {
+    if (initialProjectId) {
+      const match = DataService.getProjects().find(p => p.id === initialProjectId || p.projectId === initialProjectId);
+      if (match) setActiveProject(match);
+    }
+  }, [initialProjectId]);
 
   const refreshList = () => {
     const list = DataService.getProjects();
@@ -429,7 +438,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                 =================================================================== */}
 
             {/* 1. STAGE: Order Placed -> Manager Assigns Technician with explicit Button */}
-            {activeProject.stage === 'Order Placed' && (
+            {(activeProject.stage === 'Order Placed' || activeProject.stage === 'Survey Pending' || !activeProject.technicianId) && (
               <div className="p-5 rounded-xl border border-amber-200 bg-amber-50/50 space-y-4">
                 <div className="flex items-center gap-2">
                   <UserCheck className="w-5 h-5 text-[#C66B45]" />
@@ -505,24 +514,89 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
 
             {/* 2. STAGE: Survey Assigned or Survey In Progress */}
             {(activeProject.stage === 'Survey Assigned' || activeProject.stage === 'Survey In Progress') && (
-              <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/60 flex items-start gap-3">
-                <Clock className="w-5 h-5 text-sky-700 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <h4 className="font-bold text-sm text-sky-900">
-                    Survey Dispatched to {activeProject.technicianName}
-                  </h4>
-                  <p className="text-xs text-sky-800">
-                    Scheduled Date: <strong className="font-mono">{activeProject.surveyDate || 'Pending visit'}</strong>.
-                  </p>
-                  <p className="text-[11px] text-sky-700">
-                    The field technician is conducting on-site tilt angle, azimuth orientation, and shading obstacle analysis. Awaiting Feasibility Report submission.
-                  </p>
+              <div className="p-4 rounded-xl border border-sky-200 bg-sky-50/60 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-sky-700 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-sm text-sky-900">
+                        Survey Dispatched to {activeProject.technicianName}
+                      </h4>
+                      <p className="text-xs text-sky-800">
+                        Scheduled Visit Date: <strong className="font-mono">{activeProject.surveyDate || 'Pending visit'}</strong>
+                      </p>
+                      <p className="text-[11px] text-sky-700">
+                        The lead field technician is conducting on-site tilt angle, azimuth orientation, and shading obstacle analysis. Awaiting Feasibility Report submission.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowReassign(!showReassign)}
+                    className="px-3 py-1.5 rounded-lg border border-sky-300 bg-white hover:bg-sky-50 text-sky-900 text-xs font-semibold shrink-0 cursor-pointer transition-colors"
+                  >
+                    {showReassign ? 'Hide Reassignment' : 'Reassign / Change Date'}
+                  </button>
                 </div>
+
+                {showReassign && (
+                  <form onSubmit={handleAssignTechnicianSubmit} className="pt-3 border-t border-sky-200 space-y-3 animate-in fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="block font-semibold text-slate-900 mb-1">
+                          Select Alternate Technician:
+                        </label>
+                        <select
+                          value={assignTechId}
+                          onChange={(e) => setAssignTechId(e.target.value)}
+                          className="w-full p-2 rounded-lg border border-slate-300 bg-white text-slate-900 text-xs focus:outline-none focus:border-[#C66B45]"
+                          required
+                        >
+                          {TECHNICIANS.map(t => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} ({t.activeProjects} active projects) • {t.phone}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-slate-900 mb-1">
+                          Update Scheduled Date:
+                        </label>
+                        <input
+                          type="date"
+                          value={assignSurveyDate}
+                          onChange={(e) => setAssignSurveyDate(e.target.value)}
+                          className="w-full p-2 rounded-lg border border-slate-300 bg-white font-mono text-slate-900 text-xs focus:outline-none focus:border-[#C66B45]"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowReassign(false)}
+                        className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-1.5 rounded-lg bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-xs cursor-pointer"
+                      >
+                        Confirm Reassignment
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             )}
 
             {/* 3. STAGE: Survey Submitted -> Manager Reviews Read-Only Report & Approves or Requests Re-survey */}
-            {activeProject.stage === 'Survey Submitted' && (
+            {(activeProject.stage === 'Survey Submitted' || activeProject.stage === 'Survey Completed') && (
               <div className="p-5 rounded-xl border border-blue-200 bg-blue-50/40 space-y-5">
                 <div className="flex items-center justify-between">
                   <div>
@@ -671,7 +745,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                   <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="font-bold text-sm text-emerald-900">
-                      Feasibility Approved — Awaiting Warehouse Staging
+                      Feasibility Approved - Unlocked for Warehouse Hardware Dispatch
                     </h4>
                     <p className="text-xs text-emerald-800 mt-0.5">
                       The Bill of Materials (BOM) has been released to the warehouse. Warehouse personnel will assign equipment serial numbers and dispatch hardware.
@@ -685,7 +759,7 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
                     setActiveProject(null);
                     onNavigateTab('warehouse');
                   }}
-                  className="px-4 py-2 rounded-lg bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 flex items-center gap-1.5 shrink-0 transition-colors"
+                  className="px-4 py-2 rounded-lg bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
                 >
                   <Truck className="w-4 h-4" />
                   <span>Go to Warehouse Queue</span>
@@ -693,6 +767,45 @@ export const InstallationsPage: React.FC<InstallationsPageProps> = ({
               </div>
             )}
 
+            {/* Persistent Read-Only Feasibility Report Record (Visible for Approved and Subsequent Stages) */}
+            {activeProject.feasibilityReport && activeProject.stage !== 'Survey Submitted' && activeProject.stage !== 'Survey Completed' && (
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Technical Feasibility Record (Approved)</span>
+                  </h4>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Approved by Operations Manager
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-lg bg-white border border-slate-200 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Roof Type</span>
+                    <span className="font-semibold text-slate-900">{activeProject.feasibilityReport.roofType || 'Concrete Flat'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Tilt Angle</span>
+                    <span className="font-mono font-bold text-slate-900">{activeProject.feasibilityReport.tiltAngleDeg || 22}°</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Azimuth</span>
+                    <span className="font-semibold text-slate-900">{activeProject.feasibilityReport.azimuthOrientation || 'South-Facing'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Earthing Pit</span>
+                    <span className="font-mono font-bold text-slate-900">{activeProject.feasibilityReport.earthingResistanceOhms || 2.1} Ω</span>
+                  </div>
+                </div>
+
+                {activeProject.feasibilityReport.directorReviewNotes && (
+                  <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-900">
+                    <strong>Manager Sign-off Notes:</strong> {activeProject.feasibilityReport.directorReviewNotes}
+                  </div>
+                )}
+              </div>
+            )}
             {/* 5. STAGE: Hardware Dispatched */}
             {activeProject.stage === 'Hardware Dispatched' && (
               <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">

@@ -1863,7 +1863,7 @@ export class DataService {
       technicianId: 'TECH-001',
       technicianName: 'Rajesh & Team',
       surveyDate: dateStr,
-      stage: 'Survey Pending',
+      stage: 'Order Placed',
       progressPercent: 15,
       installedProducts: [
         {
@@ -2056,7 +2056,7 @@ export class DataService {
     proj.progressPercent = 35;
 
     if (data.customerOrders) {
-      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
       if (order) {
         order.status = 'Survey In Progress';
         order.progressPercent = 35;
@@ -2091,7 +2091,7 @@ export class DataService {
     proj.progressPercent = 45;
 
     if (data.customerOrders) {
-      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
       if (order) {
         order.status = 'Survey Submitted';
         order.progressPercent = 45;
@@ -2138,7 +2138,7 @@ export class DataService {
     }
 
     if (data.customerOrders) {
-      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
       if (order) {
         order.status = 'Feasibility Approved';
         order.progressPercent = 55;
@@ -2186,7 +2186,7 @@ export class DataService {
     proj.approvalNotes = `Re-survey Requested: ${reason}`;
 
     if (data.customerOrders) {
-      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
       if (order) {
         order.status = 'Survey Assigned';
         order.progressPercent = 25;
@@ -2272,7 +2272,7 @@ export class DataService {
     }
 
     if (data.customerOrders) {
-      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
       if (order) {
         order.status = 'Hardware Dispatched';
         order.progressPercent = 70;
@@ -2333,7 +2333,7 @@ export class DataService {
     proj.progressPercent = 85;
 
     if (data.customerOrders) {
-      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
       if (order) {
         order.status = 'Installation & Handover Completed';
         order.progressPercent = 85;
@@ -2378,7 +2378,7 @@ export class DataService {
     proj.completionDate = new Date().toISOString().split('T')[0];
 
     if (data.customerOrders) {
-      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id);
+      const order = data.customerOrders.find(o => o.projectId === proj.projectId || o.projectId === proj.id || o.customerId === proj.customerId);
       if (order) {
         order.status = 'Commissioned & Closed';
         order.progressPercent = 100;
@@ -2428,8 +2428,8 @@ export class DataService {
 
     const tech = TECHNICIANS.find(t => t.id === technicianId) || TECHNICIANS[0];
 
-    order.status = 'Technician Dispatched / Survey Scheduled';
-    order.progressPercent = 35;
+    order.status = 'Survey Assigned';
+    order.progressPercent = 25;
     order.assignedTechnicianName = tech.name;
     order.assignedTechnicianPhone = tech.phone;
     order.scheduledSurveyDate = scheduledDate;
@@ -2437,16 +2437,47 @@ export class DataService {
       order.notes = (order.notes ? order.notes + ' | ' : '') + `Manager notes: ${notes}`;
     }
 
-    // Update associated InstallationProject
-    if (order.projectId) {
-      const proj = data.projects.find(p => p.id === order.projectId || p.projectId === order.projectId);
-      if (proj) {
-        proj.stage = 'Installation Scheduled';
-        proj.progressPercent = 35;
-        proj.technicianId = tech.id;
-        proj.technicianName = tech.name;
-        proj.surveyDate = scheduledDate;
+    // Update or create associated InstallationProject with stage 'Survey Assigned'
+    let proj = data.projects.find(p => 
+      (order.projectId && (p.id === order.projectId || p.projectId === order.projectId)) ||
+      p.customerId === order.customerId
+    );
+
+    if (proj) {
+      proj.stage = 'Survey Assigned';
+      proj.progressPercent = 25;
+      proj.technicianId = tech.id;
+      proj.technicianName = tech.name;
+      proj.surveyDate = scheduledDate;
+      if (notes) {
+        proj.approvalNotes = (proj.approvalNotes ? proj.approvalNotes + ' | ' : '') + `Manager survey notes: ${notes}`;
       }
+    } else {
+      const newPrjId = order.projectId || `PRJ-2026-0${Math.floor(100 + Math.random() * 900)}`;
+      order.projectId = newPrjId;
+      proj = {
+        id: newPrjId,
+        projectId: newPrjId,
+        quotationId: order.quotationId,
+        quotationNumber: order.quotationId,
+        customerId: order.customerId,
+        customerName: order.customerName,
+        customerPhone: order.contactNumber,
+        customerAddress: order.installationAddress,
+        capacityKw: order.capacityKw,
+        systemType: order.systemType,
+        technicianId: tech.id,
+        technicianName: tech.name,
+        surveyDate: scheduledDate,
+        stage: 'Survey Assigned',
+        progressPercent: 25,
+        installedProducts: [],
+        photos: [],
+        customerApproved: false,
+        approvalNotes: notes ? `Manager survey notes: ${notes}` : undefined,
+        createdAt: new Date().toISOString()
+      };
+      data.projects.unshift(proj);
     }
 
     // Auto-advance customer lead status

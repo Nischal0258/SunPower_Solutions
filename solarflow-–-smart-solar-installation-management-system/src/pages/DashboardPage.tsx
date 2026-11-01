@@ -104,6 +104,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   };
 
   const pendingOrders = customerOrders.filter(o => o.status === 'Pending Approval');
+  const pendingSurveys = projects.filter(p => p.stage === 'Survey Submitted' || p.stage === 'Survey Completed');
+
+  const handleQuickApproveFeasibility = (projectId: string) => {
+    const success = DataService.approveFeasibilityReport(
+      projectId,
+      'Feasibility parameters verified on executive dashboard. Approved for warehouse hardware dispatch.'
+    );
+    if (success) {
+      showToast('Feasibility Approved! Order unlocked in Warehouse for material staging & dispatch.', 'success');
+      refreshDashboard();
+    } else {
+      showToast('Failed to approve feasibility report.', 'error');
+    }
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -196,6 +210,67 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <Check className="w-4 h-4" />
                   <span>Approve Order</span>
                 </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Technical Feasibility Surveys Awaiting Manager Approval Banner */}
+      {pendingSurveys.length > 0 && (
+        <div className="bg-blue-50/70 border border-blue-300/80 rounded-2xl p-5 shadow-xs space-y-3 animate-in fade-in">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+              <h3 className="font-bold text-sm text-slate-900">
+                Site Feasibility Surveys Awaiting Manager Approval ({pendingSurveys.length})
+              </h3>
+            </div>
+            <span className="text-[11px] font-bold text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-300">
+              Technical Verification Gate
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {pendingSurveys.map(p => (
+              <div
+                key={p.id}
+                className="bg-white p-4 rounded-xl border border-blue-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-slate-900">{p.projectId}</span>
+                    <span className="text-slate-400">•</span>
+                    <span className="font-bold text-slate-800">{p.customerName}</span>
+                    <span className="text-slate-400">•</span>
+                    <span className="font-semibold text-slate-700">{p.capacityKw} kW {p.systemType}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                      Survey Submitted
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Submitted by: <strong className="text-slate-800">{p.feasibilityReport?.surveyorName || p.technicianName}</strong> • Roof: {p.feasibilityReport?.roofType || 'Concrete Flat'} ({p.feasibilityReport?.tiltAngleDeg || 22}° Tilt, {p.feasibilityReport?.azimuthOrientation || 'South'}) • Earthing: {p.feasibilityReport?.earthingResistanceOhms || 2.1} Ω
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => onNavigateTab('installations', p.id)}
+                    className="px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <span>Review Full Report</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickApproveFeasibility(p.id)}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Approve & Unlock Dispatch</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
