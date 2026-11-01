@@ -86,7 +86,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
 
     // 3. Technical specifications / hardware / panels / inverter / battery
     if (q.includes('panel') || q.includes('watt') || q.includes('mono perc') || q.includes('inverter') || q.includes('battery') || q.includes('hardware') || q.includes('spec')) {
-      return `SolarFlow installations utilize Tier-1 Bifacial / Mono PERC 545W+ photovoltaic modules (21.8% efficiency, 25-year performance warranty), paired with smart hybrid sine-wave inverters (97.6% efficiency, IP65 weatherproof) and optional 5.12 kWh LiFePO4 wall-mount energy storage batteries designed for 6,000+ deep charge cycles.`;
+      return `SunPower installations utilize Tier-1 Bifacial / Mono PERC 545W+ photovoltaic modules (21.8% efficiency, 25-year performance warranty), paired with smart hybrid sine-wave inverters (97.6% efficiency, IP65 weatherproof) and optional 5.12 kWh LiFePO4 wall-mount energy storage batteries designed for 6,000+ deep charge cycles.`;
     }
 
     // 4. Technician / site visit / survey
@@ -95,7 +95,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
     }
 
     // 5. Default intelligent assistant reply
-    return `Thank you for your inquiry, ${currentCustomer.name}. SolarFlow AI provides real-time updates regarding your installation schedule, PM Surya Ghar subsidy documentation, and technical equipment specs. If you require direct assistance from our operations desk, simply click the "Connect to Staff" button above or type "connect to staff"!`;
+    return `Thank you for your inquiry, ${currentCustomer.name}. SunPower AI provides real-time updates regarding your installation schedule, PM Surya Ghar subsidy documentation, and technical equipment specs. If you require direct assistance from our operations desk, simply click the "Connect to Staff" button above or type "connect to staff"!`;
   };
 
   // Human Staff Escalation Handler
@@ -125,7 +125,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
     escalationMessages.push({
       id: `msg-${Date.now()}-handover`,
       sender: 'bot',
-      senderName: 'SolarFlow AI Assistant',
+      senderName: 'SunPower AI Assistant',
       text: `🔔 Handover Active: I've escalated your conversation along with full project context (Order: ${activeOrder?.id || 'Active'}, Phase: ${activeOrder?.status || 'Active'}) to our Support & Operations team. A staff specialist is reviewing your transcript and will reply directly here.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
@@ -200,7 +200,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
     setTimeout(() => {
       DataService.sendHelpdeskMessage(newTicket.id, {
         sender: 'bot',
-        senderName: 'SolarFlow AI Assistant',
+        senderName: 'SunPower AI Assistant',
         text: botReply
       });
       setIsTyping(false);
@@ -250,7 +250,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
         const reply = generateAIResponse(userText);
         DataService.sendHelpdeskMessage(activeTicket.id, {
           sender: 'bot',
-          senderName: 'SolarFlow AI Assistant',
+          senderName: 'SunPower AI Assistant',
           text: reply
         });
         setIsTyping(false);
@@ -277,7 +277,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
         const reply = generateAIResponse(userText);
         DataService.sendHelpdeskMessage(newTicket.id, {
           sender: 'bot',
-          senderName: 'SolarFlow AI Assistant',
+          senderName: 'SunPower AI Assistant',
           text: reply
         });
         setIsTyping(false);
@@ -321,7 +321,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs font-bold text-white leading-tight">SolarFlow AI Assistant</h4>
+                  <h4 className="text-xs font-bold text-white leading-tight">SunPower AI Assistant</h4>
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
                 </div>
                 <p className="text-[10px] text-[#DBBA95]/80 leading-tight">
@@ -407,7 +407,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
             {(!activeTicket || activeTicket.messages.length === 0) ? (
               <div className="text-center py-10 text-slate-400 space-y-2">
                 <Sparkles className="w-8 h-8 mx-auto text-[#C66B45]/50 animate-pulse" />
-                <p className="font-medium text-xs text-slate-700">How can SolarFlow AI assist you today?</p>
+                <p className="font-medium text-xs text-slate-700">How can SunPower AI assist you today?</p>
                 <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
                   Ask about your installation status, PM Surya Ghar subsidy timeline, or click "Connect to Staff" for a human specialist.
                 </p>
@@ -425,7 +425,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
                   >
                     <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
                       <span className={`font-semibold ${isAgent ? 'text-blue-700' : isBot ? 'text-[#C66B45]' : 'text-slate-600'}`}>
-                        {isAgent ? '👤 Support Staff' : isBot ? '✨ SolarFlow AI' : msg.senderName}
+                        {isAgent ? '👤 Support Staff' : isBot ? '✨ SunPower AI' : msg.senderName}
                       </span>
                       <span>•</span>
                       <span>{msg.timestamp}</span>
@@ -450,7 +450,7 @@ export const AIChatbotWidget: React.FC<AIChatbotWidgetProps> = ({
             {isTyping && (
               <div className="flex items-center gap-1.5 text-[11px] text-slate-400 italic">
                 <Sparkles className="w-3.5 h-3.5 text-[#C66B45] animate-spin" />
-                <span>SolarFlow AI is formulating response...</span>
+                <span>SunPower AI is formulating response...</span>
               </div>
             )}
 

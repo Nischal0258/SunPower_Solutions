@@ -186,7 +186,7 @@ export const ReportsPage: React.FC = () => {
 
   const handleExportCSV = () => {
     DataService.exportFinancialYearDataCSV();
-    showToast('SolarFlow FY 2025-26 financial report exported to CSV successfully.', 'success');
+    showToast('SunPower FY 2025-26 financial report exported to CSV successfully.', 'success');
   };
 
   const activeMetric = hoveredMonthIndex !== null ? monthlyData[hoveredMonthIndex] : monthlyData[monthlyData.length - 2];

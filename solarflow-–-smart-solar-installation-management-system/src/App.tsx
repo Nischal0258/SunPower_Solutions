@@ -250,8 +250,7 @@ function AppContent() {
             <DashboardPage
               onNavigateTab={handleNavigate}
               onOpenNewProject={() => handleNavigate('quotations')}
-              onOpenNewCustomer={() => handleNavigate('customers')}
-              onOpenNewQuotation={() => handleNavigate('quotations')}
+                            onOpenNewQuotation={() => handleNavigate('quotations')}
               onOpenNewInventory={() => handleNavigate('inventory')}
               onOpenNewTicket={() => handleNavigate('tickets')}
               userName={session.name}

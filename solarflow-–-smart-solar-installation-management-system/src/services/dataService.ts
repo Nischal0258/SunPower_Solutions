@@ -1119,6 +1119,9 @@ export class DataService {
   private static save(data: AppStateData): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sunpower_data_updated'));
+      }
     } catch (e) {
       console.error('Failed to save to localStorage:', e);
     }
@@ -1195,10 +1198,12 @@ export class DataService {
     name: string;
     email: string;
     phone: string;
-    address: string;
-    propertyType: 'Residential' | 'Commercial';
-    monthlyBill: number;
     password?: string;
+    address?: string;
+    propertyType?: 'Residential' | 'Commercial';
+    monthlyBill?: number;
+    roofAreaSqFt?: number;
+    roofType?: string;
   }): { success: boolean; customer: Customer; error?: string } {
     const data = this.load();
     const cleanEmail = payload.email.trim().toLowerCase();
@@ -1213,29 +1218,37 @@ export class DataService {
     }
 
     const newId = `CUST-${String(data.customers.length + 1).padStart(3, '0')}`;
-    const city = payload.address.includes(',') ? payload.address.split(',')[1].trim() : 'Pune';
-    const state = payload.address.includes('Karnataka') ? 'Karnataka' : payload.address.includes('Telangana') ? 'Telangana' : 'Maharashtra';
+    const rawAddress = payload.address?.trim() || 'Pending Rooftop Setup';
+    const city = rawAddress.includes(',') ? rawAddress.split(',')[1].trim() : 'Pune';
+    const state = rawAddress.includes('Karnataka') ? 'Karnataka' : rawAddress.includes('Telangana') ? 'Telangana' : 'Maharashtra';
 
-    // Estimate capacity from bill (approx 1 kW per ₹900 - ₹1000 monthly bill)
-    const estimatedKw = Math.max(3, Math.min(25, Math.round(payload.monthlyBill / 900)));
-    const estimatedRoof = estimatedKw * 100;
+    const hasRooftopData = Boolean(payload.roofAreaSqFt && payload.roofAreaSqFt > 0 && payload.address && payload.address !== 'Pending Rooftop Setup');
+    const monthlyBill = payload.monthlyBill || 0;
+    const estimatedKw = monthlyBill > 0 
+      ? Math.max(1, Math.min(25, Math.round(monthlyBill / 900))) 
+      : (payload.roofAreaSqFt ? Math.max(1, Math.round(payload.roofAreaSqFt / 100)) : 5);
+    const estimatedRoof = payload.roofAreaSqFt || (estimatedKw * 100);
 
     const newCust: Customer = {
       id: newId,
       name: payload.name.trim(),
       email: cleanEmail,
       phone: cleanPhone,
-      address: payload.address.trim(),
+      address: rawAddress,
       city,
       state,
       pincode: '411045',
       enquiryDate: new Date().toISOString().split('T')[0],
       leadStatus: 'Hot',
-      monthlyBill: payload.monthlyBill,
-      propertyType: payload.propertyType,
+      monthlyBill,
+      propertyType: payload.propertyType || 'Residential',
+      roofType: payload.roofType || 'Concrete RCC Flat Roof',
       sanctionLoadKw: estimatedKw,
       roofAreaSqFt: estimatedRoof,
-      notes: `Registered via Self Sign-Up. Property: ${payload.propertyType}, Avg Monthly Bill: ₹${payload.monthlyBill.toLocaleString('en-IN')}`,
+      needsRooftopDetails: !hasRooftopData,
+      notes: hasRooftopData 
+        ? `Registered via Self Sign-Up. Property: ${payload.propertyType || 'Residential'}, Roof: ${estimatedRoof} sq.ft, Avg Bill: ₹${monthlyBill.toLocaleString('en-IN')}`
+        : `Registered via Portal Sign-Up. Awaiting rooftop & personal property details onboarding.`,
       createdAt: new Date().toISOString()
     };
 
@@ -1245,7 +1258,7 @@ export class DataService {
       id: `ACT-${Date.now()}`,
       type: 'customer',
       title: `New Customer Registration: ${newCust.name}`,
-      description: `Self-registered customer with ${newCust.propertyType} property. Avg Bill: ₹${payload.monthlyBill}.`,
+      description: `Customer account created via portal (${cleanEmail}). ${hasRooftopData ? 'Rooftop specifications recorded.' : 'Rooftop details pending onboarding.'}`,
       timestamp: new Date().toISOString(),
       actor: newCust.name
     });
@@ -1253,7 +1266,7 @@ export class DataService {
     data.notifications.unshift({
       id: `NOTIF-${Date.now()}`,
       title: `New Customer Registered: ${newCust.name}`,
-      message: `${newCust.name} (${cleanEmail}) registered via portal.`,
+      message: `${newCust.name} (${cleanEmail}) joined the platform. Customer Ledger updated.`,
       type: 'info',
       date: 'Just now',
       read: false,
@@ -1262,6 +1275,62 @@ export class DataService {
 
     this.save(data);
     return { success: true, customer: newCust };
+  }
+
+  /**
+   * Update Customer Rooftop & Personal Property Details post-signup
+   * Updates rooftop square footage, roof construction type, address, and bill.
+   */
+  public static updateCustomerRooftopDetails(customerId: string, details: {
+    roofAreaSqFt: number;
+    roofType?: string;
+    propertyType: 'Residential' | 'Commercial';
+    address: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    monthlyBill: number;
+    sanctionLoadKw?: number;
+    notes?: string;
+  }): Customer | null {
+    const data = this.load();
+    const cust = data.customers.find(c => c.id === customerId);
+    if (!cust) return null;
+
+    cust.roofAreaSqFt = details.roofAreaSqFt;
+    cust.roofType = details.roofType || 'Concrete RCC Flat Roof';
+    cust.propertyType = details.propertyType;
+    cust.address = details.address.trim();
+    if (details.city) cust.city = details.city.trim();
+    if (details.state) cust.state = details.state.trim();
+    if (details.pincode) cust.pincode = details.pincode.trim();
+    cust.monthlyBill = details.monthlyBill;
+    cust.sanctionLoadKw = details.sanctionLoadKw || Math.max(1, Math.min(25, Math.round(details.monthlyBill / 900)));
+    cust.needsRooftopDetails = false;
+    cust.leadStatus = 'Hot';
+    cust.notes = `Rooftop Details: ${details.roofAreaSqFt} sq.ft (${cust.roofType}), ${cust.propertyType}. Avg Bill: ₹${details.monthlyBill.toLocaleString('en-IN')}. ${details.notes || ''}`.trim();
+
+    data.activities.unshift({
+      id: `ACT-${Date.now()}`,
+      type: 'customer',
+      title: `Rooftop Details Completed: ${cust.name}`,
+      description: `${details.roofAreaSqFt} sq.ft (${cust.roofType}) profile recorded at ${cust.address}.`,
+      timestamp: new Date().toISOString(),
+      actor: cust.name
+    });
+
+    data.notifications.unshift({
+      id: `NOTIF-${Date.now()}`,
+      title: `Rooftop Profile Ready: ${cust.name}`,
+      message: `${cust.name} submitted rooftop specs (${details.roofAreaSqFt} sq.ft, ${cust.propertyType}). Ready for solar design.`,
+      type: 'action',
+      date: 'Just now',
+      read: false,
+      linkTab: 'customers'
+    });
+
+    this.save(data);
+    return cust;
   }
 
   public static deleteCustomer(id: string): boolean {
@@ -2693,7 +2762,7 @@ export class DataService {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', 'SolarFlow_Financial_Year_FY2025_26_Report.csv');
+        link.setAttribute('download', 'SunPower_Financial_Year_FY2025_26_Report.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

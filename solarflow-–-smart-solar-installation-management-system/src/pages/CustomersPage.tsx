@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Search,
@@ -76,6 +76,17 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
       setViewCustomer(updated);
     }
   };
+
+  useEffect(() => {
+    refreshList();
+    const handleUpdate = () => refreshList();
+    window.addEventListener('sunpower_data_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('sunpower_data_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [initialCustomerId]);
 
   const handleOpenAdd = () => {
     setEditingCustomer(null);
@@ -260,15 +271,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-[#C66B45] text-white text-xs font-semibold hover:bg-[#C66B45]/90 transition-all shadow-sm shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Customer</span>
-          </button>
-        </div>
+
       </div>
 
       {/* Main Table View */}
@@ -301,8 +304,13 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                     className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
                   >
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900 text-xs group-hover:text-[#C66B45] transition-colors">
-                        {cust.name}
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900 text-xs group-hover:text-[#C66B45] transition-colors">
+                          {cust.name}
+                        </span>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-50 text-[#C66B45] border border-amber-200">
+                          {cust.propertyType || 'Residential'}
+                        </span>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400">{cust.id}</span>
                     </td>
@@ -326,8 +334,10 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                       <StatusBadge status={cust.leadStatus} type="lead" />
                     </td>
                     <td className="py-3.5 px-4 font-mono text-slate-900">
-                      <div>{cust.sanctionLoadKw || 5} kW Sanctioned</div>
-                      <div className="text-[11px] text-slate-500">{cust.roofAreaSqFt || 0} sq.ft roof</div>
+                      <div className="font-bold text-xs">{cust.roofAreaSqFt || 0} sq.ft roof</div>
+                      <div className="text-[11px] text-slate-500">
+                        {cust.monthlyBill ? `₹${cust.monthlyBill.toLocaleString('en-IN')}/mo` : `${cust.sanctionLoadKw || 5} kW Load`}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 font-mono text-slate-600">
                       {cust.enquiryDate}
@@ -436,6 +446,49 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
                 <p className="text-slate-500 font-medium">Enquiry Date</p>
                 <p className="text-base font-bold text-slate-900 font-mono mt-1">{viewCustomer.enquiryDate}</p>
                 <p className="text-[10px] text-slate-400">SunPower Customer Record</p>
+              </div>
+            </div>
+
+            {/* Engineering & Solar Specifications */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                  <Sun className="w-4 h-4 text-[#C66B45]" />
+                  <span>Engineering & Equipment Specifications</span>
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                  {viewCustomer.propertyType || 'Residential'} Tier-1 Standard
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Solar Modules</span>
+                  <span className="font-semibold text-slate-800">Waaree 545W+ Mono PERC / Bifacial</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">21.8% efficiency, 25-yr performance warranty</p>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Smart Inverter</span>
+                  <span className="font-semibold text-slate-800">Deye / Solis Hybrid Sine-Wave</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">97.6% efficiency, IP65 weatherproof</p>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Energy Storage</span>
+                  <span className="font-semibold text-slate-800">5.12 kWh LiFePO4 Storage Module</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">6,000+ deep cycles, 90% DoD</p>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">PM Surya Ghar Subsidy</span>
+                  <span className="font-bold text-[#C66B45]">
+                    {viewCustomer.propertyType === 'Commercial'
+                      ? 'Commercial Net Metering'
+                      : (viewCustomer.sanctionLoadKw && viewCustomer.sanctionLoadKw <= 1 ? '₹30,000 Central DBT' : viewCustomer.sanctionLoadKw && viewCustomer.sanctionLoadKw <= 2 ? '₹60,000 Central DBT' : '₹78,000 Central DBT')}
+                  </span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Direct Benefit Transfer to Bank Account</p>
+                </div>
               </div>
             </div>
 
@@ -592,7 +645,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({
       <Modal
         isOpen={isAddEditOpen}
         onClose={() => setIsAddEditOpen(false)}
-        title={editingCustomer ? `Edit Customer: ${editingCustomer.name}` : 'Add New Solar Customer'}
+        title={`Edit Customer Profile: ${editingCustomer?.name || 'Customer'}`}
         subtitle="Validate contact details & rooftop load specs to ensure survey feasibility"
         maxWidth="2xl"
       >

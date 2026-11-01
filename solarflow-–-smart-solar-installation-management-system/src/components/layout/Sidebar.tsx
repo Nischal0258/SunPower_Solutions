@@ -96,10 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             
             {!isCollapsed && (
               <div className="min-w-0 transition-opacity duration-200">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-base tracking-tight text-[#FFFFFF] truncate">SunPower</span>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-[#DBBA95]/20 text-[#DBBA95]">Pro</span>
-                </div>
+                <span className="font-bold text-base tracking-tight text-[#FFFFFF] truncate block">SunPower</span>
                 <p className="text-[11px] text-[#DBBA95]/80 font-medium tracking-tight truncate">Solar Installation OS</p>
               </div>
             )}

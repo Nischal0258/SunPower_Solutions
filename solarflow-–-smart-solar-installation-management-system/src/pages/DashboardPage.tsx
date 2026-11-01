@@ -28,8 +28,7 @@ import { Truck } from 'lucide-react';
 interface DashboardPageProps {
   onNavigateTab: (tab: NavTab, targetId?: string) => void;
   onOpenNewProject: () => void;
-  onOpenNewCustomer: () => void;
-  onOpenNewQuotation: () => void;
+    onOpenNewQuotation: () => void;
   onOpenNewInventory: () => void;
   onOpenNewTicket: () => void;
   userName?: string;
@@ -39,8 +38,7 @@ interface DashboardPageProps {
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigateTab,
   onOpenNewProject,
-  onOpenNewCustomer,
-  onOpenNewQuotation,
+    onOpenNewQuotation,
   onOpenNewInventory,
   onOpenNewTicket,
   userName,
@@ -425,19 +423,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
             <div className="grid grid-cols-1 gap-2.5">
               <button
-                onClick={onOpenNewCustomer}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all group"
+                onClick={() => onNavigateTab('customers')}
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-7 h-7 rounded-md bg-slate-50 flex items-center justify-center text-slate-900 group-hover:bg-[#C66B45] group-hover:text-white transition-colors">
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-slate-900 block">Add Customer</span>
-                    <span className="text-[11px] text-slate-500">Record lead & site details</span>
+                    <span className="text-xs font-semibold text-slate-900 block">Customer Ledger</span>
+                    <span className="text-[11px] text-slate-500">Review registered accounts & site specs</span>
                   </div>
                 </div>
-                <Plus className="w-4 h-4 text-slate-900/40 group-hover:text-slate-900" />
+                <ArrowRight className="w-4 h-4 text-slate-900/40 group-hover:text-slate-900" />
               </button>
 
               <button

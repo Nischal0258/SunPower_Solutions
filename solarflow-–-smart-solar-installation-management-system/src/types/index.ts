@@ -62,9 +62,11 @@ export interface Customer {
   enquiryDate: string;
   leadStatus: LeadStatus;
   roofAreaSqFt?: number;
+  roofType?: string;
   sanctionLoadKw?: number;
   monthlyBill?: number;
   propertyType?: 'Residential' | 'Commercial';
+  needsRooftopDetails?: boolean;
   notes?: string;
   createdAt: string;
 }
@@ -403,7 +405,11 @@ export interface CustomerPersona {
   state: string;
   pincode: string;
   roofAreaSqFt: number;
+  roofType?: string;
   sanctionLoadKw: number;
+  monthlyBill?: number;
+  propertyType?: 'Residential' | 'Commercial';
+  needsRooftopDetails?: boolean;
   installedSystem?: string;
   avatarInitials: string;
 }

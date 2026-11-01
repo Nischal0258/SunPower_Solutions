@@ -30,9 +30,14 @@ import {
   TrendingUp,
   Sliders,
   HelpCircle,
-  Users
+  Users,
+  Home,
+  Building2,
+  MapPin,
+  Edit3
 } from 'lucide-react';
 import { useToast } from '../components/common/Toast';
+import { Modal } from '../components/common/Modal';
 import { ProfileSettingsModal } from '../components/common/ProfileSettingsModal';
 import { GridBreakdownModal } from '../components/common/GridBreakdownModal';
 import { CustomerSupportChat } from '../components/customer/CustomerSupportChat';
@@ -103,9 +108,33 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
   const [isBOMModalOpen, setIsBOMModalOpen] = useState(false);
   const [bomModalSystemType, setBOMModalSystemType] = useState<SystemType>('On-grid');
 
+  // Rooftop & Personal Property Onboarding Modal State
+  const isRooftopPending = Boolean(
+    activeCustomer.needsRooftopDetails || 
+    !activeCustomer.roofAreaSqFt || 
+    activeCustomer.address === 'Pending Setup' || 
+    activeCustomer.address === 'Pending Rooftop Setup' || 
+    !activeCustomer.address
+  );
+  const [isRooftopModalOpen, setIsRooftopModalOpen] = useState<boolean>(isRooftopPending);
+
+  // Rooftop Form Inputs
+  const [modalRoofArea, setModalRoofArea] = useState<number>(activeCustomer.roofAreaSqFt || 1200);
+  const [modalRoofType, setModalRoofType] = useState<string>(activeCustomer.roofType || 'Concrete RCC Flat Roof');
+  const [modalPropertyType, setModalPropertyType] = useState<'Residential' | 'Commercial'>(activeCustomer.propertyType || 'Residential');
+  const [modalAddress, setModalAddress] = useState<string>(
+    activeCustomer.address && activeCustomer.address !== 'Pending Setup' && activeCustomer.address !== 'Pending Rooftop Setup'
+      ? activeCustomer.address
+      : ''
+  );
+  const [modalCity, setModalCity] = useState<string>(activeCustomer.city || 'Pune');
+  const [modalState, setModalState] = useState<string>(activeCustomer.state || 'Maharashtra');
+  const [modalPincode, setModalPincode] = useState<string>(activeCustomer.pincode || '411045');
+  const [modalMonthlyBill, setModalMonthlyBill] = useState<number>(activeCustomer.monthlyBill || 4500);
+
   // Tab 1: Solar Advisor Interactive Calculator State
   const [roofAreaSqFt, setRoofAreaSqFt] = useState<number>(activeCustomer.roofAreaSqFt || 1200);
-  const [monthlyBillInr, setMonthlyBillInr] = useState<number>(4500);
+  const [monthlyBillInr, setMonthlyBillInr] = useState<number>(activeCustomer.monthlyBill || 4500);
   const [powerCutFrequency, setPowerCutFrequency] = useState<'rare' | 'frequent'>('rare');
 
   // Tab 2: System Configuration & Checkout State
@@ -153,6 +182,53 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
       window.removeEventListener('storage', handleDataUpdate);
     };
   }, [activeCustomer.id]);
+
+  // Handle Saving Rooftop & Personal Details
+  const handleSaveRooftopDetails = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalAddress.trim()) {
+      showToast('Please enter your rooftop installation address.', 'warning');
+      return;
+    }
+    if (modalRoofArea <= 0) {
+      showToast('Please enter a valid rooftop area in sq ft.', 'warning');
+      return;
+    }
+
+    const cleanAddr = modalAddress.trim();
+    const fullAddr = cleanAddr.includes(modalCity) ? cleanAddr : `${cleanAddr}, ${modalCity}, ${modalState} - ${modalPincode}`;
+
+    const updated = DataService.updateCustomerRooftopDetails(activeCustomer.id, {
+      roofAreaSqFt: modalRoofArea,
+      roofType: modalRoofType,
+      propertyType: modalPropertyType,
+      address: fullAddr,
+      city: modalCity,
+      state: modalState,
+      pincode: modalPincode,
+      monthlyBill: modalMonthlyBill
+    });
+
+    if (updated) {
+      setActiveCustomer(prev => ({
+        ...prev,
+        roofAreaSqFt: modalRoofArea,
+        roofType: modalRoofType,
+        propertyType: modalPropertyType,
+        address: fullAddr,
+        city: modalCity,
+        state: modalState,
+        pincode: modalPincode,
+        monthlyBill: modalMonthlyBill,
+        needsRooftopDetails: false
+      }));
+      setRoofAreaSqFt(modalRoofArea);
+      setMonthlyBillInr(modalMonthlyBill);
+      setCheckoutAddress(fullAddr);
+      showToast('Rooftop & personal property details saved! Custom solar engineering unlocked.', 'success');
+      setIsRooftopModalOpen(false);
+    }
+  };
 
   // Handle Persona Switching
   const handleSwitchPersona = (personaId: string) => {
@@ -301,6 +377,25 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
         <div className="flex items-center gap-3">
 
 
+          {/* Rooftop Details Button */}
+          <button
+            onClick={() => setIsRooftopModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C66B45]/20 hover:bg-[#C66B45]/30 text-[#DBBA95] hover:text-white border border-[#C66B45]/40 transition-colors text-xs font-semibold cursor-pointer"
+            title="Update rooftop area and installation property details"
+          >
+            <Home className="w-3.5 h-3.5 text-[#C66B45]" />
+            <span className="hidden sm:inline">Rooftop Profile</span>
+            {activeCustomer.roofAreaSqFt && activeCustomer.roofAreaSqFt > 0 ? (
+              <span className="text-[10px] bg-white/10 px-1.5 py-0.2 rounded font-mono">
+                {activeCustomer.roofAreaSqFt} sq.ft
+              </span>
+            ) : (
+              <span className="text-[10px] bg-amber-500 text-slate-900 px-1.5 py-0.2 rounded font-bold">
+                Setup Req.
+              </span>
+            )}
+          </button>
+
           {/* Customer Profile Pill */}
           <button
             onClick={() => setIsProfileModalOpen(true)}
@@ -332,6 +427,30 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
 
       {/* Main Container */}
       <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 space-y-6">
+        {/* Pending Rooftop Setup Banner */}
+        {isRooftopPending && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-100 text-amber-900 shrink-0 mt-0.5">
+                <Home className="w-5 h-5 text-[#C66B45]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-amber-950 text-sm">Step 2: Complete Your Rooftop & Property Details</h3>
+                <p className="text-amber-800 text-xs mt-0.5">
+                  Enter your rooftop square footage, roof construction type, and installation address to calculate optimal solar capacity, generation potential, and PM Surya Ghar subsidy.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsRooftopModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-sm whitespace-nowrap self-start sm:self-auto cursor-pointer flex items-center gap-1.5"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Enter Rooftop Details</span>
+            </button>
+          </div>
+        )}
+
         {/* Dynamic Welcome Banner */}
         <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7E2D9] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -1138,7 +1257,37 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
         {/* =======================================================================
             TAB 4: MY HARDWARE & SYSTEM PERFORMANCE (POST-INSTALLATION)
             ======================================================================= */}
-        {activeTab === 'hardware' && (
+        {activeTab === 'hardware' && (() => {
+          const commissionedOrder = orders.find(
+            o => o.status === 'Commissioned' || o.status === 'Commissioned & Closed'
+          );
+
+          if (!commissionedOrder) {
+            return (
+              <div className="bg-white rounded-2xl border border-[#E7E2D9] p-8 sm:p-14 text-center max-w-2xl mx-auto space-y-5 shadow-xs animate-in fade-in duration-200 my-4">
+                <div className="w-16 h-16 rounded-2xl bg-[#F5F3EF] border border-[#E7E2D9] flex items-center justify-center mx-auto text-[#C66B45]">
+                  <Sun className="w-8 h-8 text-[#C66B45]" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-[#292724] tracking-tight">No Active Solar Installation</h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Your hardware specifications, serial numbers, inverter health, and live generation analytics will activate here once your system is fully installed and commissioned.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={() => setActiveTab('configure')}
+                    className="px-6 py-2.5 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-md shadow-[#C66B45]/20 inline-flex items-center gap-2 transition-all cursor-pointer"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Explore Solar Systems</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
           <div className="space-y-6 animate-in fade-in duration-150">
             {/* Real-Time Generation Telemetry Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1284,7 +1433,7 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
               </div>
             </div>
           </div>
-        )}
+        )})()}
       </div>
 
       {/* Bill of Materials (BOM) Specs Modal */}
@@ -1294,6 +1443,180 @@ export const CustomerPortalPage: React.FC<CustomerPortalPageProps> = ({ onLogout
         systemType={bomModalSystemType}
         capacityKw={selectedCapacityKw}
       />
+
+      {/* Rooftop & Property Details Setup Modal */}
+      <Modal
+        isOpen={isRooftopModalOpen}
+        onClose={() => setIsRooftopModalOpen(false)}
+        title="Rooftop & Property Specifications"
+        subtitle="Complete your rooftop square footage and electrical details to unlock custom solar sizing"
+        maxWidth="2xl"
+      >
+        <form onSubmit={handleSaveRooftopDetails} className="space-y-4 text-xs font-sans">
+
+
+          {/* Form Inputs Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Square Footage Area */}
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">
+                Rooftop Area (Square Footage / sq.ft) *
+              </label>
+              <input
+                type="number"
+                required
+                min={100}
+                max={50000}
+                step={50}
+                value={modalRoofArea || ''}
+                onChange={(e) => setModalRoofArea(Number(e.target.value) || 0)}
+                placeholder="e.g. 1200"
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-mono text-xs text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              />
+              <span className="text-[10px] text-slate-400 mt-0.5 block">
+                Estimated capacity: ~{Math.max(1, Math.floor(modalRoofArea / 95))} kW (approx 95-100 sq.ft per kW)
+              </span>
+            </div>
+
+            {/* Roof Construction Type */}
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">
+                Rooftop Construction Type *
+              </label>
+              <select
+                value={modalRoofType}
+                onChange={(e) => setModalRoofType(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              >
+                <option value="Concrete RCC Flat Roof">Concrete RCC Flat Roof (Optimal Anchor)</option>
+                <option value="Tin / Metal Shed">Tin / Metal Shed (Corrugated Sheet)</option>
+                <option value="Clay Tile / Mangalore Tile">Clay Tile / Mangalore Tile</option>
+                <option value="Asbestos Sheet">Asbestos Sheet</option>
+              </select>
+            </div>
+
+            {/* Property Type */}
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">
+                Property Classification *
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalPropertyType('Residential')}
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
+                    modalPropertyType === 'Residential'
+                      ? 'bg-[#C66B45]/10 border-[#C66B45] text-[#C66B45]'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  <span>Residential</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModalPropertyType('Commercial')}
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
+                    modalPropertyType === 'Commercial'
+                      ? 'bg-[#C66B45]/10 border-[#C66B45] text-[#C66B45]'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Commercial</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Average Monthly Bill */}
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">
+                Average Monthly Electricity Bill (₹) *
+              </label>
+              <input
+                type="number"
+                required
+                min={500}
+                max={500000}
+                step={100}
+                value={modalMonthlyBill || ''}
+                onChange={(e) => setModalMonthlyBill(Number(e.target.value) || 0)}
+                placeholder="e.g. 4500"
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-mono text-xs text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              />
+            </div>
+          </div>
+
+          {/* Installation Rooftop Address */}
+          <div>
+            <label className="block font-semibold text-slate-900 mb-1">
+              Rooftop Installation Street Address *
+            </label>
+            <input
+              type="text"
+              required
+              value={modalAddress}
+              onChange={(e) => setModalAddress(e.target.value)}
+              placeholder="e.g. Plot 42, Green Valley Enclave, Baner Road"
+              className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#C66B45]"
+            />
+          </div>
+
+          {/* City, State, Pincode in 3 Cols */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">City *</label>
+              <input
+                type="text"
+                required
+                value={modalCity}
+                onChange={(e) => setModalCity(e.target.value)}
+                className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">State *</label>
+              <input
+                type="text"
+                required
+                value={modalState}
+                onChange={(e) => setModalState(e.target.value)}
+                className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-900 mb-1">Pincode *</label>
+              <input
+                type="text"
+                required
+                value={modalPincode}
+                onChange={(e) => setModalPincode(e.target.value)}
+                className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 focus:outline-none focus:border-[#C66B45]"
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={() => setIsRooftopModalOpen(false)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              className="px-5 py-2.5 rounded-xl bg-[#C66B45] hover:bg-[#C66B45]/90 text-white font-bold text-xs shadow-md shadow-[#C66B45]/20 flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <Check className="w-4 h-4" />
+              <span>Save Rooftop Details & Unlock Solar Assessment</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Profile Settings Modal */}
       <ProfileSettingsModal

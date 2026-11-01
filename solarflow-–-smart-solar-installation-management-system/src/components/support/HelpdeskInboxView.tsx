@@ -322,7 +322,7 @@ export const HelpdeskInboxView: React.FC = () => {
                           ? 'text-amber-700' 
                           : 'text-slate-700'
                       }`}>
-                        {isAgent ? '👤 Support Staff (You)' : isBot ? '✨ SolarFlow AI' : `👤 ${m.senderName || 'Customer'}`}
+                        {isAgent ? '👤 Support Staff (You)' : isBot ? '✨ SunPower AI' : `👤 ${m.senderName || 'Customer'}`}
                       </span>
                       <span>•</span>
                       <span>{m.timestamp}</span>

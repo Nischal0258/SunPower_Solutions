@@ -20,10 +20,7 @@ export const SunPowerLockScreen: React.FC<SunPowerLockScreenProps> = ({ onLogin 
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#C66B45] text-white shadow-xl shadow-[#C66B45]/20 mb-3 ring-4 ring-white/10">
             <Sun className="w-8 h-8 text-white" />
           </div>
-          <div className="flex items-center justify-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white">SunPower</h1>
-            <span className="text-xs uppercase tracking-wider font-semibold px-2 py-0.5 rounded bg-[#C66B45]/20 text-amber-600 border border-[#C66B45]/30">Pro</span>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">SunPower</h1>
           <p className="text-xs text-slate-400 mt-1">
             Enterprise Solar EPC & Rooftop Installation Management System
           </p>
